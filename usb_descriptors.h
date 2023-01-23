@@ -29,7 +29,7 @@
 
 #define USB_VID   0x16D0
 #define USB_BCD   0x0200
-#define USB_PID   0x05F0
+#define USB_PID   0x0567
 #define VERSION_ID 0x0001
 
 enum InterfaceNumbers {
