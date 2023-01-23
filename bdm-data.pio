@@ -1,0 +1,81 @@
+.program bdm_data
+.side_set 1 opt
+
+.wrap_target    
+start:
+    pull                side 1          ; Pull data from tx fifo(could be 8, 16, 24 or 32 bit). Stall here if tx fifo is empty
+    set x, 0                            ; Set x as loop counter. X indicates number of bit to read
+
+tx_loop:
+    set pindirs, 1
+    out y,  1            side 0  [1]    ; Shift one bit from OSR to scratch y. Pin BKGD goes low for 4 cycles
+    jmp !y  keep_low             [1]    ; If scratch y = 0, jump to keep_low
+    nop                  side 1  [7]    ; If 1 is transmitted, pin BKGD goes back to high state after 4 cycles
+    jmp     end_tx_loop                       
+keep_low:
+    nop
+    nop                          [7]    ; If 0 is transmitted, hold pin BKGD low for 9 cycles                      
+end_tx_loop:                            ; pin BKGD goes high for the last 3 cycles. If it was high before, side set operation does not take place        
+    jmp !osre tx_loop   side 1   [1]    ; If osr is not empty(osr_count < pull_threshold), go back to tx_loop
+    nop                                 ; Keep pin high for the last 16th cycle
+
+delay:
+    nop                          [7]
+    nop                          [4]    ; 16 - 3 cycles of delay between write and read operation
+
+    mov y, x                            ; Copy scratch x to y
+
+    jmp x-- rx_loop                     ; Check if there are bits to read. Since x is always decrement by one, it should be the exact number of bit to shift in.
+    jmp no_rx                           
+ 
+rx_loop:
+    set pindirs, 1              
+    nop                 side 0   [3]    ; Keep pin low for 4 cycles
+    set pindirs, 0               [5]    ; Set pin to input and wait 5 cycles
+    in pins, 1                   [2]    ; At 10th cycle sample one bit from pin and store it in ISR and wait 4 cycles             
+    jmp x-- rx_loop     side 1   [1]    ; If x is non-zero, go back to rx_loop
+    push                side 1          ; Push data to RX FIFO
+    jmp end
+
+no_rx:
+    in null, 32                         ; Shift in dummy bits to signal the end of the operation
+    push
+end:
+    mov x, y                            ; Copy back scratch y to scratch x, in order to save the number of bits to shift in without setting scratch x again    
+.wrap
+
+
+% c-sdk {
+// Helper function (for use in C program) to initialize this PIO program
+void bdm_data_program_init(PIO pio, uint sm, uint offset, uint data_pin, float div, bool shift_right, bool autopull, bool autopush, uint pull_threshold, uint push_threshold) {
+
+    // Sets up state machine and wrap target. This function is automatically
+    // generated in bdm.pio.h.
+    pio_sm_config c = bdm_data_program_get_default_config(offset);
+
+    // Connect pin to SIDE-SET pin (control with 'side-set' instruction)
+    sm_config_set_sideset_pins(&c, data_pin);
+
+    // Connect pin to IN pin (control with 'in' instruction)
+    sm_config_set_in_pins(&c, data_pin);
+
+    // Connect pin to SET pin (control with 'set' instruction)
+    sm_config_set_set_pins(&c, data_pin, 1);
+
+    // Allow PIO to control GPIO pin (as output)
+    pio_gpio_init(pio, data_pin);
+    
+    // Set the clock divider for the state machine
+    sm_config_set_clkdiv(&c, div);
+
+    // Set shift pull count threshold
+    sm_config_set_out_shift(&c, shift_right, autopull, pull_threshold);
+
+    // Set shift push count threshold
+    sm_config_set_in_shift(&c, shift_right, autopush, push_threshold);
+
+    // Load configuration and jump to start of the program
+    pio_sm_init(pio, sm, offset, &c);
+}
+
+%}

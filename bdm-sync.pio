@@ -1,0 +1,67 @@
+.program bdm_sync
+.side_set 1 opt
+
+    in null, 32                         ; Set isr to all zeros
+    mov y, !isr                         ; Copy isr to scratch y bit-reversed. Now scratch y is all ones.
+
+    set pindirs, 1                      ; set pin direction to output
+
+    set x, 30           side 0          ; set loop counter to 30(in order to loop for 31 times)
+wait_128:
+    nop                         [1]
+    jmp x-- wait_128            [1]     ; 1 + (31 * 4) + 3 = 128 cycles 
+    nop                         [2]     ; Hold pin low for 128 cycles
+    nop                 side 1          ; Speed-up pulse
+    set pindirs, 0                      ; Removes all drive to the BKGD pin so it reverts to high impedance
+    wait 0 pin 0                      ; Wait for the pin to go low(input mapping is used)
+
+loop:
+    jmp pin end_timer                   ; If pin is high, jump to end_timer
+    jmp y-- loop                        ; If y is non-zero, decrement y and restart the loop
+
+timeout:
+    push                                ; If y reaches zero -> timeout. TODO: lower the timout(now is ~18min) 
+
+end_timer:
+    mov isr, !y                         ; Copy y to isr bit-reversed and push data. 
+    push
+
+% c-sdk {
+
+// Helper function (for use in C program) to initialize this PIO program
+void bdm_sync_program_init(PIO pio, uint sm, uint offset, uint data_pin, float div) {
+
+    // Sets up state machine and wrap target. This function is automatically
+    // generated in bdm.pio.h.
+    pio_sm_config c = bdm_sync_program_get_default_config(offset);
+
+    // Connect pin to SET pin (control with 'set' instruction)
+    sm_config_set_set_pins(&c, data_pin, 1);
+
+    // Connect pin to SIDE-SET pin (control with 'side-set' instruction)
+    sm_config_set_sideset_pins(&c, data_pin);
+
+    // Connect pin to IN pin (control with 'in' instruction)
+    sm_config_set_in_pins(&c, data_pin);
+
+    // Connect pin to JMP instruction
+    sm_config_set_jmp_pin(&c, data_pin);
+
+    // Allow PIO to control GPIO pin (as output)
+    pio_gpio_init(pio, data_pin);
+
+    // Set the initial pin direction as output (in PIO) 
+    pio_sm_set_consecutive_pindirs(pio, sm, data_pin, 1, true);
+    
+    // Set the clock divider for the state machine
+    sm_config_set_clkdiv(&c, div);
+
+    // Set shift push count threshold.
+    sm_config_set_in_shift(&c, true, false, 32);
+
+    // Load configuration and jump to start of the program
+    pio_sm_init(pio, sm, offset, &c);
+}
+
+%}
+    
