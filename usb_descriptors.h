@@ -25,13 +25,22 @@
 #ifndef USB_DESCRIPTORS_H_
 #define USB_DESCRIPTORS_H_
 
-enum
-{
-  REPORT_ID_KEYBOARD = 1,
-  REPORT_ID_MOUSE,
-  REPORT_ID_CONSUMER_CONTROL,
-  REPORT_ID_GAMEPAD,
-  REPORT_ID_COUNT
+#endif /* USB_DESCRIPTORS_H_ */
+
+#define USB_VID   0x16D0
+#define USB_BCD   0x0200
+#define USB_PID   0x05F0
+#define VERSION_ID 0x0001
+
+enum InterfaceNumbers {
+   BULK_INTF_ID,
+   NUMBER_OF_INTERFACES,
 };
 
-#endif /* USB_DESCRIPTORS_H_ */
+#define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_VENDOR_DESC_LEN)
+#define EP_ADD_OUT 0xc
+#define EP_ADD_IN  0x8
+
+#define PRODUCT_DESCRIPTION "USBDM ARM-SWD for OpenSDAv2.1"
+#define MANUFACTURER        "pgo"
+#define SERIAL_NO           "USBDM-OPENSDA-0001"
