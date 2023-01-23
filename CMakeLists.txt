@@ -7,7 +7,7 @@ include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 include($ENV{PICO_SDK_PATH}/tools/CMakeLists.txt)
 
 # Set name of project (as PROJECT_NAME) and C/C++ standards
-project(pio-bdm C CXX ASM)
+project(usbdm-pi C CXX ASM)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
@@ -20,6 +20,17 @@ add_executable(${PROJECT_NAME}
     pio_functions.c
 )
 
+target_sources(${PROJECT_NAME} PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR}/main.c
+        ${CMAKE_CURRENT_LIST_DIR}/functions.c
+        ${CMAKE_CURRENT_LIST_DIR}/pio_functions.c
+        ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
+        )
+
+# Make sure TinyUSB can find tusb_config.h
+target_include_directories(${PROJECT_NAME} PUBLIC
+        ${CMAKE_CURRENT_LIST_DIR})
+
 # Create C header file with the name <pio program>.pio.h
 pico_generate_pio_header(${PROJECT_NAME}  
         ${CMAKE_CURRENT_LIST_DIR}/bdm-data.pio
@@ -29,10 +40,15 @@ pico_generate_pio_header(${PROJECT_NAME}
 )
 
 # Link to pico_stdlib (gpio, time, etc. functions)
-target_link_libraries(${PROJECT_NAME}
+# In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
+# for TinyUSB device support and tinyusb_board for the additional board support library used by the example
+target_link_libraries(
+    ${PROJECT_NAME} PUBLIC
     pico_stdlib
     hardware_clocks
     hardware_pio
+    tinyusb_device 
+    tinyusb_board
 )
 
 # Enable usb output, disable uart output
@@ -41,3 +57,13 @@ pico_enable_stdio_uart(${PROJECT_NAME} 0)
 
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(${PROJECT_NAME})
+
+# Uncomment this line to enable fix for Errata RP2040-E5 (the fix requires use of GPIO 15)
+#target_compile_definitions(dev_hid_composite PUBLIC PICO_RP2040_USB_DEVICE_ENUMERATION_FIX=1)
+
+##################################
+
+
+
+
+
