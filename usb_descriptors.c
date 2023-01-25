@@ -21,11 +21,11 @@ tusb_desc_device_t const desc_device =
     .idProduct          = CONST_NATIVE_TO_LE16(USB_PID),
     .bcdDevice          = CONST_NATIVE_TO_LE16(VERSION_ID),
 
-    .iManufacturer      = 1,
-    .iProduct           = 2,
-    .iSerialNumber      = 3,
+    .iManufacturer      = s_manufacturer_index,
+    .iProduct           = s_product_index,
+    .iSerialNumber      = s_serial_index,
 
-    .bNumConfigurations = 1
+    .bNumConfigurations = NUMBER_OF_CONFIGURATIONS
 };
 
 // Invoked when received GET DEVICE DESCRIPTOR
@@ -42,10 +42,10 @@ uint8_t const * tud_descriptor_device_cb(void)
 uint8_t const desc_configuration[] =
 {
   // Config number, interface count, string index, total length, attribute, power in mA
-  TUD_CONFIG_DESCRIPTOR(NUMBER_OF_INTERFACES, 4, 0, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_SELF_POWERED, 500),
+  TUD_CONFIG_DESCRIPTOR(CONFIGURATION_NUM, NUMBER_OF_INTERFACES, s_config_index, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_SELF_POWERED, 500),
 
   // Interface number, string index, EP Out & IN address, EP size
-  TUD_VENDOR_DESCRIPTOR(BULK_INTF_ID, 5, EP_ADD_OUT,EP_ADD_IN, 64)
+  TUD_VENDOR_DESCRIPTOR(BULK_INTF_ID, s_bulk_interface_index, USB_DIR_OUT|BULK_OUT_ENDPOINT, USB_DIR_IN|BULK_IN_ENDPOINT, 64)
 };
 
 // Invoked when received GET CONFIGURATION DESCRIPTOR
@@ -66,9 +66,9 @@ char const* string_desc_arr[] = {
       MANUFACTURER,
       PRODUCT_DESCRIPTION,
       SERIAL_NO,
-      "Default configuration",
+      CONFIGURATION_DESCRIPTION,
 
-      "Bulk Interface"
+      BULK_INTERFACE_DESCRIPTION
       
       /*s_cdc_interface,
       s_cdc_control,
