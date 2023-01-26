@@ -25,6 +25,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/functions.c
         ${CMAKE_CURRENT_LIST_DIR}/pio_functions.c
         ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
+        ${CMAKE_CURRENT_LIST_DIR}/usbdm.c
         )
 
 # Make sure TinyUSB can find tusb_config.h

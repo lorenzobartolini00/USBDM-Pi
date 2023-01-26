@@ -34,7 +34,16 @@
 #define USB_VID   0x16D0
 #define USB_BCD   0x0200
 #define USB_PID   0x0567
-#define VERSION_ID 0x0001
+
+#define VERSION_MAJOR 4 
+#define VERSION_MINOR 12
+#define VERSION_MICRO 1
+#define VERSION_STR "4.12.1"
+#define VERSION_SW  ((VERSION_MAJOR<<4)+VERSION_MINOR)
+#define VERSION_ID VERSION_SW
+
+#define VENDOR_CODE 0x30
+static const uint8_t OS_StringDescriptor[] = {18, 3, 'M',0,'S',0,'F',0,'T',0,'1',0,'0',0,'0',0,VENDOR_CODE,0x00};
 
 //--------------------------------------------------------------------+
 // Interfaces
@@ -42,6 +51,9 @@
 
 enum InterfaceNumbers {
    BULK_INTF_ID,
+   //ITF_NUM_CDC_0,
+   //ITF_NUM_CDC_0_DATA,
+   
    NUMBER_OF_INTERFACES,
 };
 
@@ -57,21 +69,14 @@ enum EndpointNumbers {
    /** USB Control endpoint number - must be zero */
    CONTROL_ENDPOINT = 0,
 
-   /* end-points are assumed consecutive */
+   /** Bulk endpoint number */
+   BULK_ENDPOINT,
    
-   /** Bulk out endpoint number */
-   BULK_OUT_ENDPOINT,
-   /** Bulk in endpoint number */
-   BULK_IN_ENDPOINT,
+   // CDC 0 Notif endpoint number
+   //CDC_0_NOTIF_ENDPOINT,
+   // CDC 0 Data endpoint number
+   // CDC_0_DATA_ENDPOINT,
    
-   /*
-   // CDC Control endpoint number
-   CDC_NOTIFICATION_ENDPOINT,
-   // CDC Data out endpoint number
-   CDC_DATA_OUT_ENDPOINT,
-   // CDC Data in endpoint number
-   CDC_DATA_IN_ENDPOINT,
-   */
 
    /** Total number of end-points */
    NUMBER_OF_ENDPOINTS,
@@ -91,7 +96,7 @@ enum Configurations {
 };
 
 
-#define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_VENDOR_DESC_LEN)
+#define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_VENDOR_DESC_LEN + CFG_TUD_CDC * TUD_CDC_DESC_LEN)
 
 
 //--------------------------------------------------------------------+
@@ -112,14 +117,8 @@ enum StringIds {
    /** Name of Bulk interface */
    s_bulk_interface_index,
 
-   /*
-   // Name of CDC interface
+   /** Name of CDC interface */
    s_cdc_interface_index,
-   // CDC Control Interface
-   s_cdc_control_interface_index,
-   // CDC Data Interface 
-   s_cdc_data_Interface_index,
-   */
 
    // Marks last entry
    s_number_of_string_descriptors
@@ -129,5 +128,7 @@ enum StringIds {
 #define PRODUCT_DESCRIPTION         "USBDM ARM-SWD for OpenSDAv2.1"
 #define SERIAL_NO                   "USBDM-OPENSDA-0001"
 #define CONFIGURATION_DESCRIPTION   "Default configuration"
+#define CDC_INTERFACE_DESCRIPTION   "CDC Interface"               // 5: CDC Interface
 #define BULK_INTERFACE_DESCRIPTION  "Bulk Interface"
+
      

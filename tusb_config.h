@@ -65,7 +65,7 @@
 #endif
 
 #ifndef CFG_TUSB_OS
-#define CFG_TUSB_OS               OPT_OS_NONE
+#define CFG_TUSB_OS OPT_OS_NONE
 #endif
 
 // CFG_TUSB_DEBUG is defined by compiler in DEBUG build
@@ -103,10 +103,6 @@
 
 #define CFG_TUD_VENDOR_RX_BUFSIZE  (256)
 #define CFG_TUD_VENDOR_TX_BUFSIZE  (256)
-
-// CDC FIFO size of TX and RX
-#define CFG_TUD_CDC_RX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
-#define CFG_TUD_CDC_TX_BUFSIZE   (TUD_OPT_HIGH_SPEED ? 512 : 64)
 
 #ifdef __cplusplus
  }
