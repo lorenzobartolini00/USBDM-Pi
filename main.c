@@ -42,9 +42,8 @@ int main(void)
     tud_task(); // tinyusb device task
 
     usbdm_task();
-    // cdc_task();
 
-    led_blinking_task();
+    //led_blinking_task();
   }
 
   return 0;
@@ -84,7 +83,7 @@ void device_init()
 //--------------------------------------------------------------------+
 void usbdm_task(void)
 {
-  
+  return;
 }
 
 //--------------------------------------------------------------------+

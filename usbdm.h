@@ -59,9 +59,10 @@ typedef enum  {
 #define HW_UF        0xC0
 
 #define H_USBDM                 1  //!< USBDM    - Universal TBDML/OSBDM JB16
-#define TARGET_HARDWARE H_USBDM
+#define H_USBDM_JMxxCLD          7  //!< USBDM hardware using 9S08JM16/32/60CLD (44p package)
+#define TARGET_HARDWARE H_USBDM_JMxxCLD
 
-#define VERSION_HW  (HW_JB+TARGET_HARDWARE)
+#define VERSION_HW  (HW_JM+TARGET_HARDWARE)
 
 #define ICP_VERSION_SW_LOCATION (0xF800)
 #define ICP_VERSION_HW_LOCATION (ICP_VERSION_SW_LOCATION+1)

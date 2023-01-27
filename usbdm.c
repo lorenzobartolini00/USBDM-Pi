@@ -32,6 +32,8 @@
 
 #include "device/usbd.h"
 
+#include "pico/stdlib.h"
+
 #include "usbdm.h"
 #include "usb_descriptors.h"
 
@@ -113,6 +115,8 @@ void usbdmd_init(void)
     tu_fifo_config(&p_itf->rx_ff, p_itf->rx_ff_buf, CFG_TUD_VENDOR_RX_BUFSIZE, 1, false);
     tu_fifo_config(&p_itf->tx_ff, p_itf->tx_ff_buf, CFG_TUD_VENDOR_TX_BUFSIZE, 1, false);
 
+
+
 /*
 #if CFG_FIFO_MUTEX
     tu_fifo_config_mutex(&p_itf->rx_ff, osal_mutex_create(&p_itf->rx_ff_mutex));
@@ -170,37 +174,58 @@ uint16_t usbdmd_open(uint8_t rhport, tusb_desc_interface_t const * itf_desc, uin
   return drv_len;
 }
 
-// Control transfer usbdm
+// Invoked on
+// 1.Device Control Requests(Class type)
+// 1.Interface Control Requests(Class & STD type)
 static bool usbdmd_control_xfer_cb(uint8_t __unused rhport, uint8_t stage, tusb_control_request_t const * request) {
-    // nothing to do with DATA & ACK stage
+  // nothing to do with DATA & ACK stage
     if (stage != CONTROL_STAGE_SETUP) return true;
-
-    // Find available interface
-    vendord_interface_t* p_vendor = NULL;
-    for(uint8_t itf_num=0; itf_num<CFG_TUD_VENDOR; itf_num++)
-    {
-        if (request->wIndex == itf_num ) 
-        {
-            if (request->bRequest == CMD_USBDM_GET_VER) 
-            {
-                if (request->wValue & 0x100) 
-                {
-                    uint8_t versionConstant[5];
-                    versionConstant[0] = BDM_RC_OK; 
-                    versionConstant[1] = VERSION_SW;      // BDM SW/HW version
-                    versionConstant[2] = VERSION_HW;
-                    versionConstant[3] = ICP_Version_SW;  // ICP SW/HW version
-                    versionConstant[4] = ICP_Version_HW;
-
-                    tud_control_xfer(rhport, request, versionConstant, sizeof(versionConstant));
-                }
-            }
-        }
-    }
-
     
     return false;
 }
+
+// Invoked on Control Requests(Vendor type)
+bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_request_t const * request)
+{
+  // Handle vendor request only
+  TU_VERIFY(request->bmRequestType_bit.type == TUSB_REQ_TYPE_VENDOR);
+
+  uint8_t itf = 0;
+  vendord_interface_t* p_vendor = _vendord_itf;
+
+  // Identify which interface to use
+  for ( ; ; itf++, p_vendor++)
+  {
+    if (itf >= TU_ARRAY_SIZE(_vendord_itf)) return false;
+
+    if ( p_vendor->itf_num == request->wIndex ) break;
+  }
+
+  switch ( request->bRequest )
+  {
+    case CMD_USBDM_GET_VER:
+      if (stage == CONTROL_STAGE_SETUP)
+      {
+        if (request->wValue == 0x100) 
+            {
+              uint8_t versionConstant[5];
+              versionConstant[0] = BDM_RC_OK; 
+              versionConstant[1] = VERSION_SW;      // BDM SW/HW version
+              versionConstant[2] = VERSION_HW;      // ICP_Version_SW;
+              versionConstant[3] = 0;               // ICP_Version_HW;
+              versionConstant[4] = VERSION_HW;
+
+              return tud_control_xfer(rhport, request, versionConstant, sizeof(versionConstant));
+            }
+      }
+      break;
+
+    default: return false; // stall unsupported request
+  }
+
+  return true;
+}
+
 
 bool usbdmd_xfer_cb(uint8_t rhport, uint8_t ep_addr, xfer_result_t result, uint32_t xferred_bytes)
 {
@@ -249,8 +274,35 @@ static usbd_class_driver_t const _usbdmd_driver =
     .sof              = NULL
 };
 
+//--------------------------------------------------------------------+
+// Callbacks
+//--------------------------------------------------------------------+
+
 // Implement callback to add our custom driver
 usbd_class_driver_t const *usbd_app_driver_get_cb(uint8_t *driver_count) {
     *driver_count = 1;
     return &_usbdmd_driver;
+}
+
+uint32_t tud_usbdm_n_read (uint8_t itf, void* buffer, uint32_t bufsize)
+{
+  vendord_interface_t* p_itf = &_vendord_itf[itf];
+  uint32_t num_read = tu_fifo_read_n(&p_itf->rx_ff, buffer, bufsize);
+  _prep_out_transaction(p_itf);
+  return num_read;
+}
+
+// Invoked when received new data
+void tud_vendor_rx_cb(uint8_t itf)
+{
+  vendord_interface_t p_itf = _vendord_itf[itf];
+  uint8_t buffer[16];
+
+  tud_usbdm_n_read(itf, buffer, 16);
+
+  if (buffer[0]==0x02)
+  {
+    // Turn on LED
+    gpio_put(25, true);
+  }
 }
