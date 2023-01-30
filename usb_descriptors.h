@@ -35,13 +35,6 @@
 #define USB_BCD   0x0200
 #define USB_PID   0x0567
 
-#define VERSION_MAJOR 4 
-#define VERSION_MINOR 12
-#define VERSION_MICRO 1
-#define VERSION_STR "4.12.1"
-#define VERSION_SW  ((VERSION_MAJOR<<4)+VERSION_MINOR)
-#define VERSION_ID VERSION_SW
-
 #define VENDOR_CODE 0x30
 static const uint8_t OS_StringDescriptor[] = {18, 3, 'M',0,'S',0,'F',0,'T',0,'1',0,'0',0,'0',0,VENDOR_CODE,0x00};
 
@@ -124,11 +117,7 @@ enum StringIds {
    s_number_of_string_descriptors
 };
 
-#define MANUFACTURER                "pgo"
-#define PRODUCT_DESCRIPTION         "USBDM ARM-SWD for OpenSDAv2.1"
-#define SERIAL_NO                   "USBDM-OPENSDA-0001"
-#define CONFIGURATION_DESCRIPTION   "Default configuration"
-#define CDC_INTERFACE_DESCRIPTION   "CDC Interface"               // 5: CDC Interface
-#define BULK_INTERFACE_DESCRIPTION  "Bulk Interface"
+
+
 
      

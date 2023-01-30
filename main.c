@@ -10,9 +10,10 @@
 
 #include "functions.h"
 #include "pio_functions.h"
+#include "config.h"
 
 enum  {
-  BLINK_FAST = 125,
+  BLINK_COMMAND_OK = 125,
   BLINK_NOT_MOUNTED = 250,
   BLINK_MOUNTED     = 1000,
   BLINK_SUSPENDED   = 2500,
@@ -23,11 +24,8 @@ enum  {
 
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
-uint8_t data[4]={'c','i','a','o'};
-
 //------------- prototypes -------------//
 void usbdm_task(void);
-static void cdc_task(void);
 void led_blinking_task(void);
 
 
@@ -43,7 +41,7 @@ int main(void)
 
     usbdm_task();
 
-    //led_blinking_task();
+    led_blinking_task();
   }
 
   return 0;
@@ -83,6 +81,35 @@ void device_init()
 //--------------------------------------------------------------------+
 void usbdm_task(void)
 {
+  USBDM_cmd_status command_status;
+
+  if (tud_vendor_available())
+  {
+    // Receive command from EP1 OUT
+    USBDM_cmd_status command_status = receive_USB_command();
+
+    switch ((uint8_t)command_status)
+    {
+    case CMD_OK:
+    {
+      blink_interval_ms = BLINK_COMMAND_OK;
+      break;
+    }
+    case CMD_WAIT:
+    {
+      blink_interval_ms = BLINK_ALWAYS_ON;
+      break;
+    }
+    case CMD_FAIL:
+    {
+      blink_interval_ms = BLINK_ALWAYS_OFF;
+      break;
+    }
+    default:
+      break;
+    }
+  }
+
   return;
 }
 

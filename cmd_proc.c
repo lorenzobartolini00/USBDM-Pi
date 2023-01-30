@@ -1,6 +1,6 @@
-#include "usbdm.h"
 #include "cmd_proc.h"
-#include "device/usbd.h"
+
+#include "config.h"
 
 //--------------------------------------------------------------------+
 // COMMANDS CODE
@@ -50,6 +50,7 @@
 
    // 32:  CMD_USBDM_WRITE_MEM
    // 33:  CMD_USBDM_READ_MEM
+//--------------------------------------------------------------------+
 
 /*
  *   Processes all commands received over USB
@@ -65,19 +66,24 @@ uint8_t command_exec(uint8_t* command_buffer)
   uint8_t command_size = command_buffer[0];
   BDMCommands command = command_buffer[1];
 
+  uint8_t size = 1;
+
   switch((uint8_t)command)
   {
     case CMD_USBDM_GET_CAPABILITIES:
     {
-      return _cmd_usbdm_get_capabilities(command_buffer);
+      size = _cmd_usbdm_get_capabilities(command_buffer);
+      command_buffer[0]=BDM_RC_OK;
+      break;
     }
-    break;
-    default:
+    default: 
     {
-      return 0;
+      command_buffer[0] = BDM_RC_FAIL; 
+      break;
     }
-    break;
   }
+
+  return size;
 }
 
 //--------------------------------------------------------------------+
@@ -111,7 +117,6 @@ uint8_t _cmd_usbdm_get_capabilities(uint8_t* command_buffer)
 {
    // Copy BDM Options
    (void)memcpy(command_buffer+1, capabilities, sizeof(capabilities));
-   command_buffer[0]=BDM_RC_OK;
    uint8_t return_size = sizeof(capabilities) + 1;
 
    return return_size;

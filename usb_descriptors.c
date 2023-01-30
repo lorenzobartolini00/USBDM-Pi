@@ -1,5 +1,6 @@
 #include "tusb.h"
 #include "usb_descriptors.h"
+#include "config.h"
 
 //--------------------------------------------------------------------+
 // Device Descriptors 
@@ -76,9 +77,7 @@ char const* string_desc_arr[] = {
       SERIAL_NO,
       CONFIGURATION_DESCRIPTION,
 
-      BULK_INTERFACE_DESCRIPTION,
-      
-      CDC_INTERFACE_DESCRIPTION
+      BULK_INTERFACE_DESCRIPTION
 };
 
 static uint16_t _desc_str[32];

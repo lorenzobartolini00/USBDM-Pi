@@ -3,6 +3,8 @@
 #include "bdm-sync.pio.h"
 #include "hardware/claim.h"
 
+#include "config.h"
+
 // Utils------------------------------------------------------
 void measure_freqs(void) {
     uint f_pll_sys = frequency_count_khz(CLOCKS_FC0_SRC_VALUE_PLL_SYS_CLKSRC_PRIMARY);

@@ -9,7 +9,6 @@
 #include "hardware/structs/clocks.h"
 #include "hardware/pio.h"
 
-#include "config.h"
 #include "commands.h"
 
 // Define the time(in ms) to wait for a CDC connection to be established.
