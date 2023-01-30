@@ -104,6 +104,9 @@
 #define CFG_TUD_VENDOR_RX_BUFSIZE  (256)
 #define CFG_TUD_VENDOR_TX_BUFSIZE  (256)
 
+#define BDM_OUT_EP_MAXSIZE             (64) //!< USBDM - BDM out
+#define BDM_IN_EP_MAXSIZE              BDM_OUT_EP_MAXSIZE //!< USBDM - BDM in
+
 #ifdef __cplusplus
  }
 #endif

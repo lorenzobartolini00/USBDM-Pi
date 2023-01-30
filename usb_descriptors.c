@@ -45,7 +45,7 @@ uint8_t const desc_configuration[] =
   TUD_CONFIG_DESCRIPTOR(CONFIGURATION_NUM, NUMBER_OF_INTERFACES, s_config_index, CONFIG_TOTAL_LEN, TUSB_DESC_CONFIG_ATT_SELF_POWERED, 500),
 
 // Interface number, string index, EP Out & IN address, EP size
-  TUD_VENDOR_DESCRIPTOR(BULK_INTF_ID, s_bulk_interface_index, USB_DIR_OUT | BULK_ENDPOINT, USB_DIR_IN | BULK_ENDPOINT, 64),
+  TUD_VENDOR_DESCRIPTOR(BULK_INTF_ID, s_bulk_interface_index, USB_DIR_OUT | BULK_ENDPOINT, USB_DIR_IN | BULK_ENDPOINT, CFG_TUD_VENDOR_EPSIZE),
 
   // 1st CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
   //TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, s_cdc_interface_index, USB_DIR_IN | CDC_0_NOTIF_ENDPOINT, 8, USB_DIR_OUT | CDC_0_DATA_ENDPOINT, USB_DIR_IN | CDC_0_DATA_ENDPOINT, 64)

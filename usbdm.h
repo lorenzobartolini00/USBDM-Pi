@@ -1,5 +1,3 @@
-#define CMD_USBDM_GET_VER 12
-
 typedef enum  {
  BDM_RC_OK                      = 0,     //!< - No error
  BDM_RC_ILLEGAL_PARAMS          = 1,     //!< - Illegal parameters to command
@@ -70,5 +68,3 @@ typedef enum  {
 //! ICP version (2 hex digits, major.minor)
 #define ICP_VERSION_SW (1<<4|2) // 1.2
  
-const uint8_t ICP_Version_SW = ICP_VERSION_SW; 
-const uint8_t ICP_Version_HW = VERSION_HW;     
