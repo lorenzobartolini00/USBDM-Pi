@@ -73,11 +73,12 @@ uint8_t command_exec(uint8_t* command_buffer)
     case CMD_USBDM_GET_CAPABILITIES:
     {
       size = _cmd_usbdm_get_capabilities(command_buffer);
-      command_buffer[0]=BDM_RC_OK;
+      command_buffer[0] = BDM_RC_OK;
       break;
     }
     default: 
     {
+      size=1;
       command_buffer[0] = BDM_RC_FAIL; 
       break;
     }

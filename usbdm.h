@@ -199,5 +199,5 @@ typedef enum  {
 } USBDM_cmd_status;
 
 
-USBDM_cmd_status receive_USB_command(void);
+USBDM_ErrorCode receive_USB_command(void);
 void send_USB_response(uint8_t *buffer, uint8_t byte_count);

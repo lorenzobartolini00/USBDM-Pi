@@ -18,6 +18,8 @@ static uint8_t command_size = 0;
 static uint8_t command_offset = 0;
 static uint8_t saved_byte = 0;
 
+USBDM_ErrorCode command_status = BDM_RC_FAIL;
+
 
 //--------------------------------------------------------------------+
 // USB UTILS
@@ -38,9 +40,13 @@ static uint8_t saved_byte = 0;
  */
 void send_USB_response(uint8_t *buffer, uint8_t byte_count)
 {
+  command_status = BDM_RC_FAIL;
+
   if (tud_vendor_write_available())
   {
     tud_vendor_write(buffer, byte_count);
+
+    command_status = BDM_RC_OK;
   }
 }
 
@@ -79,10 +85,8 @@ void send_USB_response(uint8_t *buffer, uint8_t byte_count)
  *   |                          |
  *   +--------------------------+
 */
-USBDM_cmd_status receive_USB_command(void)
+USBDM_ErrorCode receive_USB_command(void)
 {
-  USBDM_cmd_status command_status=CMD_FAIL;
-
   uint8_t command_toggle = 0;
 
   uint8_t byte_count = tud_vendor_read(command_buffer + command_offset, MAX_COMMAND_SIZE - command_offset);
@@ -114,15 +118,22 @@ USBDM_cmd_status receive_USB_command(void)
 
       // Save the last byte of the first packet, since it will be overwritten by the first of the second packet
       saved_byte=command_buffer[command_offset];
-
-      command_status=CMD_WAIT;
     }
-    else
+    else if(command_size == byte_count)
     {
       // Only first packet is present
       done_receiving_data = true;
 
       command_offset=0;
+    }
+    else
+    {
+      // Error
+      command_buffer[0] = BDM_RC_FAIL;
+      send_USB_response(command_buffer, 1);
+      command_status = BDM_RC_FAIL;
+
+      return command_status;
     }
   }
   //2nd packet
@@ -147,11 +158,7 @@ USBDM_cmd_status receive_USB_command(void)
     // NOTE: after excecuting a command, command_exec return the number of bytes to send back to host;
     uint8_t return_size = command_exec(command_buffer);
     command_buffer[0] |= command_toggle;
-
-    if(command_buffer[0] == BDM_RC_OK)
-    {
-      command_status = CMD_OK;
-    }
+    command_status = command_buffer[0];
 
     send_USB_response(command_buffer, return_size);
   }

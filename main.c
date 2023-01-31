@@ -81,32 +81,20 @@ void device_init()
 //--------------------------------------------------------------------+
 void usbdm_task(void)
 {
-  USBDM_cmd_status command_status;
+  USBDM_ErrorCode command_status;
 
   if (tud_vendor_available())
   {
     // Receive command from EP1 OUT
-    USBDM_cmd_status command_status = receive_USB_command();
+    USBDM_ErrorCode command_status = receive_USB_command();
 
-    switch ((uint8_t)command_status)
-    {
-    case CMD_OK:
+    if ((uint8_t)command_status==BDM_RC_OK)
     {
       blink_interval_ms = BLINK_COMMAND_OK;
-      break;
     }
-    case CMD_WAIT:
-    {
-      blink_interval_ms = BLINK_ALWAYS_ON;
-      break;
-    }
-    case CMD_FAIL:
+    else
     {
       blink_interval_ms = BLINK_ALWAYS_OFF;
-      break;
-    }
-    default:
-      break;
     }
   }
 
