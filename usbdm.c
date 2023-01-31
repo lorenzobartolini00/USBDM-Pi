@@ -18,8 +18,6 @@ static uint8_t command_size = 0;
 static uint8_t command_offset = 0;
 static uint8_t saved_byte = 0;
 
-USBDM_ErrorCode command_status = BDM_RC_FAIL;
-
 
 //--------------------------------------------------------------------+
 // USB UTILS
@@ -40,13 +38,9 @@ USBDM_ErrorCode command_status = BDM_RC_FAIL;
  */
 void send_USB_response(uint8_t *buffer, uint8_t byte_count)
 {
-  command_status = BDM_RC_FAIL;
-
   if (tud_vendor_write_available())
   {
     tud_vendor_write(buffer, byte_count);
-
-    command_status = BDM_RC_OK;
   }
 }
 
@@ -129,11 +123,7 @@ USBDM_ErrorCode receive_USB_command(void)
     else
     {
       // Error
-      command_buffer[0] = BDM_RC_FAIL;
-      send_USB_response(command_buffer, 1);
-      command_status = BDM_RC_FAIL;
-
-      return command_status;
+      return send_USB_error_response(BDM_RC_FAIL);
     }
   }
   //2nd packet
@@ -158,12 +148,12 @@ USBDM_ErrorCode receive_USB_command(void)
     // NOTE: after excecuting a command, command_exec return the number of bytes to send back to host;
     uint8_t return_size = command_exec(command_buffer);
     command_buffer[0] |= command_toggle;
-    command_status = command_buffer[0];
 
     send_USB_response(command_buffer, return_size);
   }
 
-  return command_status;
+  // Return command status
+  return command_buffer[0];
 }
 
 
@@ -180,23 +170,34 @@ bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_requ
   {
     case CMD_USBDM_GET_VER:
     {
-      if (request->wValue == 0x100) 
-      {
-        uint8_t versionConstant[5];
-        versionConstant[0] = BDM_RC_OK; 
-        versionConstant[1] = VERSION_SW;      // BDM SW/HW version
-        versionConstant[2] = VERSION_HW;      // ICP_Version_SW;
-        versionConstant[3] = 0;               // ICP_Version_HW;
-        versionConstant[4] = VERSION_HW;
+      
+      uint8_t versionConstant[5];
+      versionConstant[0] = BDM_RC_OK; 
+      versionConstant[1] = VERSION_SW;      // BDM SW/HW version
+      versionConstant[2] = VERSION_HW;      // ICP_Version_SW;
+      versionConstant[3] = 0;               // ICP_Version_HW;
+      versionConstant[4] = VERSION_HW;
 
-        return tud_control_xfer(rhport, request, versionConstant, sizeof(versionConstant));
-      }
+      return tud_control_xfer(rhport, request, versionConstant, sizeof(versionConstant));
+      
       break;
     }
     default: return false; // stall unsupported request
   }
 
   return true;
+}
+
+
+USBDM_ErrorCode send_USB_error_response(USBDM_ErrorCode code)
+{
+  // Error
+  command_buffer[0] = code;
+  set_command_status(code);
+
+  send_USB_response(command_buffer, 1);
+
+  return code;
 }
 
 #endif
