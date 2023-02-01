@@ -4,8 +4,6 @@
 #include <string.h>
 #include <math.h>
 
-#include "commands.h"
-
 // Count how many commands are in a given string
 uint count_commands(char *command_str, char delimiter);
 

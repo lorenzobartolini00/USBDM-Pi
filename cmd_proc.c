@@ -3,6 +3,8 @@
 #include "config.h"
 #include "BDM_options.h"
 
+#include "bdm.h"
+
 //! Options for the BDM
 //!
 //! see \ref BDM_Option_t
@@ -84,6 +86,7 @@ static CableStatus_t cable_status =  {
 //--------------------------------------------------------------------+
 USBDM_ErrorCode command_status = BDM_RC_OK;
 uint8_t response_size = 1;
+
 /*
  *   Processes all commands received over USB
  *
@@ -266,6 +269,19 @@ uint8_t _cmd_usbdm_set_options(uint8_t* command_buffer)
    return BDM_RC_OK;
 }
 
+//! HCS12/HCS08/RS08/CFV1 - Try to connect to the target
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success   
+//!
+uint8_t _cmd_usbdm_connect(void)
+{
+  // Since we have no control over target's power supply, we can't connect it via software. 
+  // To connect the target, press pico's board button and cycle target power supply(turn off->turn on)
+
+  return BDM_RC_OK;
+}
+
 //! HCS12/HCS08/RS08/CFV1 -  Set comm speed to user supplied value
 //!
 //! @note
@@ -297,6 +313,12 @@ uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer)
 uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer)
 {
   // BDM COMMAND READ STATUS REG...
+  response_size = 5;
+  command_buffer[1] = 0;
+  command_buffer[2] = 0;
+  command_buffer[3] = 0;
+
+  command_buffer[4] = bdm_cmd_read_status();
 
   return BDM_RC_OK;
 }

@@ -9,8 +9,6 @@
 #include "hardware/structs/clocks.h"
 #include "hardware/pio.h"
 
-#include "commands.h"
-
 // Define the time(in ms) to wait for a CDC connection to be established.
 // This prevent initial program output being lost, at cost of requiring an active CDC connection
 #ifndef PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS
@@ -44,6 +42,9 @@ void pio_add_instr(PIO pio, uint instr, uint offset);
 
 // Set pull threshold
 void pio_set_pull_threshold(PIO pio, uint sm, uint pull_threshold);
+
+// Set the line low for 5 seconds, so the MCU can enter active background mode
+void bdm_connect(void);
 
 // Init bdm by setting up bdm-data.pio program in pio instruction memory
 uint bdm_init(PIO pio, uint sm, float pio_freq);

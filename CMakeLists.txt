@@ -20,6 +20,7 @@ add_executable(${PROJECT_NAME}
     pio_functions.c
     cmd_proc.c
     usbdm.c
+    bdm.c
 )
 
 target_sources(${PROJECT_NAME} PUBLIC
@@ -29,6 +30,7 @@ target_sources(${PROJECT_NAME} PUBLIC
         ${CMAKE_CURRENT_LIST_DIR}/usb_descriptors.c
         ${CMAKE_CURRENT_LIST_DIR}/usbdm.c
         ${CMAKE_CURRENT_LIST_DIR}/cmd_proc.c
+        ${CMAKE_CURRENT_LIST_DIR}/bdm.c
         )
 
 # Make sure TinyUSB can find tusb_config.h

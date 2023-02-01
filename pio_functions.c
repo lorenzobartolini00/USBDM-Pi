@@ -4,6 +4,7 @@
 #include "hardware/claim.h"
 
 #include "config.h"
+#include "commands.h"
 
 // Utils------------------------------------------------------
 void measure_freqs(void) {
@@ -112,8 +113,28 @@ void pio_set_pull_threshold(PIO pio, uint sm, uint pull_threshold)
                             ((pull_threshold & 0x1fu) << PIO_SM0_SHIFTCTRL_PULL_THRESH_LSB);
 }
 
-
 // Actual commands---------------------------------------------------------------
+
+// Set the line low for 5 seconds, so the MCU can enter active background mode
+void bdm_connect(void)
+{
+    // Keep the line low at the rising edge of MCU reset
+    gpio_init(DATA_PIN);
+    gpio_set_dir(DATA_PIN, true);
+    gpio_put(DATA_PIN, false);
+
+    // Sleep for 5 seconds, while MCU enters Active Background mode
+    sleep_ms(5000);
+
+    gpio_put(DATA_PIN, true);
+    gpio_set_dir(DATA_PIN, false);
+
+    // Set GPIO to be pulled up
+    gpio_pull_up(DATA_PIN);
+
+    // Set GPIO function to PIO_0
+    gpio_set_function(DATA_PIN, GPIO_FUNC_PIO0 );
+}
 
 // Init bdm
 uint bdm_init(PIO pio, uint sm, float pio_freq)

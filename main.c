@@ -10,6 +10,7 @@
 
 #include "functions.h"
 #include "pio_functions.h"
+#include "bdm.h"
 #include "config.h"
 
 enum  {
@@ -25,6 +26,7 @@ enum  {
 static uint32_t blink_interval_ms = BLINK_NOT_MOUNTED;
 
 //------------- prototypes -------------//
+void device_init(void);
 void usbdm_task(void);
 void led_blinking_task(void);
 
@@ -34,6 +36,9 @@ int main(void)
 {
   board_init();
   tusb_init();
+
+  // Set clock and connect BDM
+  device_init();
 
   while (1)
   {
@@ -66,12 +71,8 @@ void tud_umount_cb(void)
 //--------------------------------------------------------------------+
 // Device init
 //--------------------------------------------------------------------+
-void device_init()
+void device_init(void)
 {
-  // Set GPIO function to SIO
-  gpio_init(LED_PIN);
-  gpio_set_dir(LED_PIN, true);
-
   // Set sys clock to 64MHz
   set_sys_clock_pll(VCO_FREQ * MHZ, POST_DEV1, POST_DEV2);
 }
@@ -81,6 +82,18 @@ void device_init()
 //--------------------------------------------------------------------+
 void usbdm_task(void)
 {
+  // Check if board button is pressed
+  uint32_t const btn = board_button_read();
+
+  if (btn)
+  {
+    // Hold BKGD pin low for 5 seconds
+    bdm_connect();
+
+    // SYNC command
+    bdm_cmd_sync();
+  }
+
   USBDM_ErrorCode command_status;
 
   if (tud_vendor_available())

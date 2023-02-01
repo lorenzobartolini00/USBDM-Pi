@@ -1,6 +1,8 @@
 #include "functions.h"
 #include "config.h"
 
+#include "commands.h"
+
 
 uint count_commands(char *command_str, char delimiter)
 {
