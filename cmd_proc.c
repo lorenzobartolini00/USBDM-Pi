@@ -141,9 +141,29 @@ uint8_t command_exec(uint8_t* command_buffer)
       command_status = _cmd_usbdm_set_speed(command_buffer);
       break;
     }
+    case CMD_USBDM_GET_SPEED:  //17
+    {
+      command_status = _cmd_usbdm_get_speed(command_buffer);
+      break;
+    }
     case CMD_USBDM_READ_STATUS_REG:  //20
     {
       command_status = _cmd_usbdm_read_status_reg(command_buffer);
+      break;
+    }
+    case CMD_USBDM_TARGET_HALT:  //25
+    {
+      command_status = _cmd_usbdm_halt(command_buffer);
+      break;
+    }
+    case CMD_USBDM_WRITE_MEM:  //32
+    {
+      command_status = _cmd_usbdm_write_mem(command_buffer);
+      break;
+    }
+    case CMD_USBDM_READ_MEM:  //33
+    {
+      command_status = _cmd_usbdm_read_mem(command_buffer);
       break;
     }
     default: 
@@ -301,6 +321,23 @@ uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer)
   return BDM_RC_OK;
 }
 
+//! HCS12,HCS08,RS08 & CFV1 -  Read current speed
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success                \n
+//!    != \ref BDM_RC_OK => error                  \n
+//!                                                \n
+//!  command_buffer                                 \n
+//!   - [1..2] => 16-bit Sync value in 60MHz ticks
+//!
+uint8_t _cmd_usbdm_get_speed(uint8_t* command_buffer) 
+{
+  command_buffer[1] = 0;
+  command_buffer[2] = 0;
+  response_size = 3;
+  return BDM_RC_OK;
+}
+
 //! HCS12/HCS08/RS08/CFV1 -  Read Target BDM Status Register
 //!
 //! @return
@@ -317,9 +354,115 @@ uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer)
   command_buffer[2] = 0;
   command_buffer[3] = 0;
 
-  // Return data_buffer, which contains byte status
-  uint8_t* data_buffer = bdm_cmd_read_status();
-  command_buffer[4] = data_buffer[3];
+  // Save status on command_buffer[4]
+  bdm_cmd_read_status(command_buffer);
+
+  return BDM_RC_OK;
+}
+
+uint8_t _cmd_usbdm_halt(uint8_t* command_buffer)
+{
+  bdm_cmd_halt();
+  return BDM_RC_OK;
+}
+
+
+//! HCS08/RS08 -  Write block of bytes to memory
+//!
+//! @note
+//!  command_buffer                           \n
+//!  - [2]    = element size/mode            \n
+//!  - [3]    = # of bytes                   \n
+//!  - [4..7] = address [MSB ignored]        \n
+//!  - [8..N] = data to write
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success       \n
+//!    != \ref BDM_RC_OK => error         \n
+//!
+uint8_t _cmd_usbdm_write_mem(uint8_t* command_buffer) 
+{
+  uint8_t mode        = command_buffer[2];
+  uint8_t  count      = command_buffer[3];
+  uint8_t addr_h      = command_buffer[6];
+  uint8_t addr_l      = command_buffer[7];
+  //uint16_t addr = (uint16_t)((addr_h<<8) | addr_l);
+  uint8_t *data_ptr   = command_buffer+8;
+
+  if (mode & MS_FAST)
+  {
+    // Not supported (yet)
+    return BDM_RC_FEATURE_NOT_SUPPORTED;
+  }
+  else
+  {
+    bdm_cmd_write_byte(addr_h, addr_l, *data_ptr);
+    count--;
+    data_ptr++;
+
+    // If still have some data, write it on memory with write next
+    while(count > 0)
+    {
+      bdm_cmd_write_next(*data_ptr);
+
+      count--;
+      data_ptr++;
+    }
+  }
+
+  return BDM_RC_OK;
+}
+
+//! HCS08/RS08 -  Read block of data from memory
+//!
+//! @note
+//!  command_buffer                       \n
+//!  - [2]    = element size/mode        \n
+//!  - [3]    = # of bytes               \n
+//!  - [4..7] = address [MSB ignored]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success      \n
+//!    != \ref BDM_RC_OK => error        \n
+//!                                      \n
+//!  commandBuffer                       \n
+//!  - [1..N]  = data read
+//!
+uint8_t _cmd_usbdm_read_mem(uint8_t* command_buffer) 
+{
+  uint8_t mode = command_buffer[2];
+  uint8_t  count      = command_buffer[3];
+  uint8_t addr_h      = command_buffer[6];
+  uint8_t addr_l      = command_buffer[7];
+  uint8_t  *data_ptr  = command_buffer+1;
+
+  if (count > MAX_COMMAND_SIZE-1)
+  {
+    return BDM_RC_ILLEGAL_PARAMS; // requested block + status is too long to fit into the buffer
+  }
+
+  response_size = count + 1;
+
+  if (mode & MS_FAST)
+  {
+    // Not supported (yet)
+    return BDM_RC_FEATURE_NOT_SUPPORTED;
+  }
+  else
+  {
+    bdm_cmd_read_byte(addr_h, addr_l, data_ptr);
+    count--;
+    data_ptr++;
+
+    // If still have some data, write it on memory with write next
+    while(count > 0)
+    {
+      bdm_cmd_read_next(data_ptr);
+
+      count--;
+      data_ptr++;
+    }
+  }
 
   return BDM_RC_OK;
 }

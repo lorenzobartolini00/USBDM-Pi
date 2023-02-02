@@ -37,14 +37,15 @@
 #define WRITE_BKPT 	    ((uint8_t)0xC2)
 //=====================================================================================
 #define BYTE    8   // bits
-#define MAX_BDM_COMMAND_SIZE 5
+#define MAX_BDM_COMMAND_SIZE 6
 
 enum{
-    TX_BIT_COUNT = 0,
-    RX_BIT_COUNT = 1,
+    TX_BYTE_COUNT = 0,
+    RX_BYTE_COUNT = 1,
     COMMAND = 2,
     FIRST_PARAMETER = 3,
-    SECOND_PARAMETER = 4
+    SECOND_PARAMETER = 4,
+    THIRD_PARAMETER = 5
 };
 
 
@@ -54,4 +55,9 @@ uint bdm_command_exec(void);
 // BDM commands
 //=====================================================================================
 void bdm_cmd_sync(void);
-uint8_t* bdm_cmd_read_status(void);
+void bdm_cmd_read_status(uint8_t *command_buffer);
+void bdm_cmd_halt(void);
+void bdm_cmd_write_byte(uint8_t addr_h, uint8_t addr_l, uint8_t data);
+void bdm_cmd_write_next(uint8_t data);
+void bdm_cmd_read_byte(uint8_t addr_h, uint8_t addr_l, uint8_t *data_ptr);
+void bdm_cmd_read_next(uint8_t *data_ptr);

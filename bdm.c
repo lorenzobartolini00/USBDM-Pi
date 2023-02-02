@@ -24,7 +24,7 @@ static uint sm;
 
 // Data buffer
 //! @note : Format
-//!         - [0]    = # of bytes to tx (up to 3)
+//!         - [0]    = # of bytes to tx (up to 4)
 //!         - [1]    = # of bytes to rx (up to 2)
 //!         - [2]    = BDM command 
 //!         - [3]    = 1st byte parameter (opt)
@@ -35,7 +35,7 @@ static uint8_t data_buffer[MAX_BDM_COMMAND_SIZE];
 uint _make_data()
 {
     uint data = 0;
-    uint8_t byte_count = data_buffer[TX_BIT_COUNT];
+    uint8_t byte_count = data_buffer[TX_BYTE_COUNT];
 
     for (int i=COMMAND; i<byte_count+COMMAND; i++)
     {
@@ -84,8 +84,8 @@ uint bdm_command_exec(void)
 
     // Make data based on bytes in data_buffer
     uint data = _make_data();
-    uint8_t tx_bit_count = data_buffer[TX_BIT_COUNT]*BYTE;
-    uint8_t rx_bit_count = data_buffer[RX_BIT_COUNT]*BYTE;
+    uint8_t tx_bit_count = data_buffer[TX_BYTE_COUNT]*BYTE;
+    uint8_t rx_bit_count = data_buffer[RX_BYTE_COUNT]*BYTE;
 
     do_bdm_command(pio, sm, data, tx_bit_count, rx_bit_count, pio_offset);
 
@@ -128,16 +128,88 @@ void bdm_cmd_sync(void)
 //!     data_buffer: 
 //!     [3]   = status
 //!
-uint8_t* bdm_cmd_read_status(void)
+void bdm_cmd_read_status(uint8_t *command_buffer)
 {
-    data_buffer[TX_BIT_COUNT] = 1; // 1 byte to transmit
-    data_buffer[RX_BIT_COUNT] = 1; // 1 byte to receive
+    data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 1; // 1 byte to receive
     data_buffer[COMMAND] = READ_STATUS;
 
     uint8_t status = (uint8_t)bdm_command_exec();
 
-    // Save received data in buffer
-    data_buffer[FIRST_PARAMETER] = status;
+    // Save received data in command_buffer[4]
+    command_buffer[4] = status;
 
-    return data_buffer;
+    return;
+}
+
+// Set target in active background mode
+void bdm_cmd_halt(void)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 0; // 1 byte to receive
+    data_buffer[COMMAND] = BACKGROUND;
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write an 8 bit data word to 16 bit register
+void bdm_cmd_write_byte(uint8_t addr_h, uint8_t addr_l, uint8_t data)
+{
+    data_buffer[TX_BYTE_COUNT] = 4; // Transmit 4 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_BYTE;
+    data_buffer[FIRST_PARAMETER] = addr_h;   // Address H
+    data_buffer[SECOND_PARAMETER] = addr_l; // Address L
+    data_buffer[THIRD_PARAMETER] = data;
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write an 8 bit data to the next memory location (in relation to the last location written)
+void bdm_cmd_write_next(uint8_t data)
+{
+    data_buffer[TX_BYTE_COUNT] = 2;
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_NEXT;
+    data_buffer[FIRST_PARAMETER] = data;
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Read an 8 bit data word to 16 bit register
+void bdm_cmd_read_byte(uint8_t addr_h, uint8_t addr_l, uint8_t* data_ptr)
+{
+    data_buffer[TX_BYTE_COUNT] = 3; 
+    data_buffer[RX_BYTE_COUNT] = 1;
+    data_buffer[COMMAND] = READ_BYTE;
+    data_buffer[FIRST_PARAMETER] = addr_h;   // Address H
+    data_buffer[SECOND_PARAMETER] = addr_l; // Address L
+
+    uint8_t read_byte = (uint8_t)bdm_command_exec();
+
+    // Save read value into the buffer
+    data_ptr[0] = read_byte;
+
+    return;
+}
+
+// Read an 8 bit data from the next memory location (in relation to the last location read)
+void bdm_cmd_read_next(uint8_t* data_ptr)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; 
+    data_buffer[RX_BYTE_COUNT] = 1; 
+    data_buffer[COMMAND] = READ_NEXT;
+
+    uint8_t read_byte = (uint8_t)bdm_command_exec();
+
+    // Save read value into the buffer
+    data_ptr[0] = read_byte;
+
+    return;
 }
