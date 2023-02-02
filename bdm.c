@@ -154,6 +154,86 @@ void bdm_cmd_halt(void)
     return;
 }
 
+// Read register A
+void bdm_cmd_read_a(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // Transmit 1 bytes
+    data_buffer[RX_BYTE_COUNT] = 1;
+    data_buffer[COMMAND] = READ_A;
+
+    uint8_t reg_a = (uint8_t)bdm_command_exec();
+
+    // 8 bit value
+    command_buffer[3] = 0;
+    command_buffer[4] = reg_a;
+
+    return;
+}
+
+// Read register CCR
+void bdm_cmd_read_ccr(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // Transmit 1 bytes
+    data_buffer[RX_BYTE_COUNT] = 1;
+    data_buffer[COMMAND] = READ_CCR;
+
+    uint8_t reg_ccr = (uint8_t)bdm_command_exec();
+
+    // 8 bit value
+    command_buffer[3] = 0;
+    command_buffer[4] = reg_ccr;
+
+    return;
+}
+
+// Read register PC
+void bdm_cmd_read_pc(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // Transmit 1 bytes
+    data_buffer[RX_BYTE_COUNT] = 2;
+    data_buffer[COMMAND] = READ_PC;
+
+    uint16_t reg_ccr = (uint16_t)bdm_command_exec();
+
+    // 16 bit value
+    command_buffer[3] = (uint8_t)(reg_ccr>>8);
+    command_buffer[4] = (uint8_t)(reg_ccr&0xFF);
+
+    return;
+}
+
+// Read register HX
+void bdm_cmd_read_hx(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // Transmit 1 bytes
+    data_buffer[RX_BYTE_COUNT] = 2;
+    data_buffer[COMMAND] = READ_HX;
+
+    uint16_t reg_hx = (uint16_t)bdm_command_exec();
+
+    // 16 bit value
+    command_buffer[3] = (uint8_t)(reg_hx>>8);
+    command_buffer[4] = (uint8_t)(reg_hx&0xFF);
+
+    return;
+}
+
+// Read register SP
+void bdm_cmd_read_sp(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // Transmit 1 bytes
+    data_buffer[RX_BYTE_COUNT] = 2;
+    data_buffer[COMMAND] = READ_SP;
+
+    uint16_t reg_sp = (uint16_t)bdm_command_exec();
+
+    // 16 bit value
+    command_buffer[3] = (uint8_t)(reg_sp>>8);
+    command_buffer[4] = (uint8_t)(reg_sp&0xFF);
+
+    return;
+}
+
 // Write an 8 bit data word to 16 bit register
 void bdm_cmd_write_byte(uint8_t addr_h, uint8_t addr_l, uint8_t data)
 {

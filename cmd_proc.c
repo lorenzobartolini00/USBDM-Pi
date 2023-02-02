@@ -156,6 +156,16 @@ uint8_t command_exec(uint8_t* command_buffer)
       command_status = _cmd_usbdm_halt(command_buffer);
       break;
     }
+    case CMD_USBDM_WRITE_REG:  //26
+    {
+      command_status = _cmd_usbdm_write_reg(command_buffer);
+      break;
+    }
+    case CMD_USBDM_READ_REG:  //27
+    {
+      command_status = _cmd_usbdm_read_reg(command_buffer);
+      break;
+    }
     case CMD_USBDM_WRITE_MEM:  //32
     {
       command_status = _cmd_usbdm_write_mem(command_buffer);
@@ -366,6 +376,71 @@ uint8_t _cmd_usbdm_halt(uint8_t* command_buffer)
   return BDM_RC_OK;
 }
 
+
+//! RS08/HCS08 Write core register
+//!
+//! @note
+//!  command_buffer                                         \n
+//!  - [2..3] => 16-bit register number [MSB ignored]      \n
+//!  - [4..7] => 32-bit register value  [some MSBs ignored]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success       \n
+//!    != \ref BDM_RC_OK => error         \n
+//!
+uint8_t _cmd_usbdm_write_reg(uint8_t* command_buffer)
+{
+  return BDM_RC_OK;
+}
+
+
+//! RS08/HCS08 Read core register
+//!
+//! @note
+//!  command_buffer                                         \n
+//!  - [2..3] => 16-bit register number [MSB ignored]      \n
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success                         \n
+//!    != \ref BDM_RC_OK => error                           \n
+//!                                                         \n
+//!  command_buffer                                          \n
+//!  - [1..4] => 32-bit register value  [some MSBs ignored]
+//!
+uint8_t _cmd_usbdm_read_reg(uint8_t* command_buffer)
+{
+  command_buffer[1] = 0;
+  command_buffer[2] = 0;
+
+  switch (command_buffer[3]) {
+    case HCS08_RegPC :
+        // 16 bit register
+        bdm_cmd_read_pc(command_buffer);
+        break;
+    case HCS08_RegHX  :
+        // 16 bit register
+        bdm_cmd_read_hx(command_buffer);
+        break;
+    case HCS08_RegSP :
+        // 16 bit register
+        bdm_cmd_read_sp(command_buffer);
+        break;
+    case HCS08_RegA  :
+        // 8 bit register
+        bdm_cmd_read_a(command_buffer);
+        break;
+    case HCS08_RegCCR :
+        // 8 bit register
+        bdm_cmd_read_ccr(command_buffer);
+        break;
+    default:
+        return BDM_RC_ILLEGAL_PARAMS;
+  }
+
+  response_size = 5;
+
+  return BDM_RC_OK;
+}
 
 //! HCS08/RS08 -  Write block of bytes to memory
 //!

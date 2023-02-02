@@ -26,6 +26,16 @@ typedef enum {
    MS_XLong    = MS_Long+MS_Data,
 } MemorySpace_t;
 
+//! regNo Parameter for USBDM_ReadReg() with HCS08 target
+//!
+typedef enum {
+   HCS08_RegPC  = 0xB,  //!< PC  reg
+   HCS08_RegSP  = 0xF,  //!< SP  reg
+   HCS08_RegHX  = 0xC,  //!< HX  reg
+   HCS08_RegA   = 8,    //!< A   reg
+   HCS08_RegCCR = 9,    //!< CCR reg
+} HCS08_Registers_t;
+
 //--------------------------------------------------------------------+
 // IMPLEMENTED FUNCTIONALITIES
 //--------------------------------------------------------------------+
@@ -41,6 +51,9 @@ uint8_t _cmd_usbdm_get_speed(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_halt(uint8_t* command_buffer);
+
+uint8_t _cmd_usbdm_write_reg(uint8_t* command_buffer);
+uint8_t _cmd_usbdm_read_reg(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_write_mem(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_read_mem(uint8_t* command_buffer);
