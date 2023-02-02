@@ -14,6 +14,8 @@ static bool is_bdm_data_init = false;
 static bool is_freq_known = false; 
 // Frequency of the PIO
 static float pio_freq = PIO_FREQ;
+// 16-bit Sync value in 1MHz ticks
+static uint16_t ticks = 0;  
 // Offset of the PIO instruction memory
 static uint pio_offset = 0;
 // Selected PIO
@@ -115,12 +117,28 @@ void bdm_cmd_sync(void)
         is_sm_init = true;
     }
 
-    // Overwrite pio instruction memory with "bdm-sync.pio" program, execute it and return measured frequency
-    pio_freq = sync(pio, sm, SYNC_FREQ);
+    // Overwrite pio instruction memory with "bdm-sync.pio" program, execute it and return ticks
+    ticks = (uint16_t)sync(pio, sm, SYNC_FREQ);
+
+    // 1 "tick" corresponds to 2 pio instruction cycles, since state machine increment "tick" every 2 instruction cycles
+    // T_measured = ticks * T_tick, where T_tick = 2 * T_pio = 2 * (1/F_pio) = 2 * (1/2MHZ) = 1us.
+    // T_measured corresponds to 128 MCU clock cycles, so T_MCU = T_measured / 128
+    // Finally F_MCU = 1/T_MCU = (1/T_measured) * 128 
+    float T_measured_us = (float)(ticks * 2 * SYNC_PERIOD);
+    // F_MCU is in HZ
+    float F_MCU = (1/T_measured_us) * 128 * MHZ;
+
+    pio_freq = F_MCU;
 
     // Pio memory has been ovewritten, so it needs to be re-initialized
     is_bdm_data_init = false;
     is_freq_known = true;
+}
+
+// Return 16-bit Sync value in 60MHz ticks
+uint16_t bdm_cmd_get_sync_length(void)
+{
+    uint16_t sync_length = (uint16_t)60*ticks;
 }
 
 //! Read status register
@@ -142,11 +160,25 @@ void bdm_cmd_read_status(uint8_t *command_buffer)
     return;
 }
 
+// Start executing user program
+void bdm_cmd_go(void)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 0; // 0 byte to receive
+    data_buffer[COMMAND] = GO;
+
+    bdm_command_exec();
+
+    is_freq_known = false;
+
+    return;
+}
+
 // Set target in active background mode
 void bdm_cmd_halt(void)
 {
     data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
-    data_buffer[RX_BYTE_COUNT] = 0; // 1 byte to receive
+    data_buffer[RX_BYTE_COUNT] = 0; // 0 byte to receive
     data_buffer[COMMAND] = BACKGROUND;
 
     bdm_command_exec();
@@ -233,6 +265,75 @@ void bdm_cmd_read_sp(uint8_t *command_buffer)
 
     return;
 }
+
+// Write register A
+void bdm_cmd_write_a(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 2; // Transmit 2 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_A;
+    data_buffer[FIRST_PARAMETER] = command_buffer[7];   // 8 bit register
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write register CCR
+void bdm_cmd_write_ccr(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 2; // Transmit 2 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_CCR;
+    data_buffer[FIRST_PARAMETER] = command_buffer[7];   // 8 bit register
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write register PC
+void bdm_cmd_write_pc(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 3; // Transmit 3 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_PC;
+    data_buffer[FIRST_PARAMETER] = command_buffer[6];
+    data_buffer[SECOND_PARAMETER] = command_buffer[7];  // 16 bit register
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write register HX
+void bdm_cmd_write_hx(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 3; // Transmit 3 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_HX;
+    data_buffer[FIRST_PARAMETER] = command_buffer[6];
+    data_buffer[SECOND_PARAMETER] = command_buffer[7];  // 16 bit register
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Write register SP
+void bdm_cmd_write_sp(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 3; // Transmit 3 bytes
+    data_buffer[RX_BYTE_COUNT] = 0;
+    data_buffer[COMMAND] = WRITE_SP;
+    data_buffer[FIRST_PARAMETER] = command_buffer[6];
+    data_buffer[SECOND_PARAMETER] = command_buffer[7];  // 16 bit register
+
+    bdm_command_exec();
+
+    return;
+}
+
 
 // Write an 8 bit data word to 16 bit register
 void bdm_cmd_write_byte(uint8_t addr_h, uint8_t addr_l, uint8_t data)

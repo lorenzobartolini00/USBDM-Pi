@@ -170,7 +170,7 @@ void do_bdm_command(PIO pio, uint sm, uint data, uint tx_bit, uint rx_bit, uint 
 
 
 // Sync
-float sync(PIO pio, uint sm, float pio_freq)
+uint sync(PIO pio, uint sm, float pio_freq)
 {
     // Clear memory and fifos and add program
     uint offset = pio_program_init(pio, sm, &bdm_sync_program);
@@ -187,16 +187,5 @@ float sync(PIO pio, uint sm, float pio_freq)
     // Wait for the sm to push data in rx fifo
     uint ticks = pio_sm_get_blocking(pio, sm);
 
-    // 1 "tick" corresponds to 2 pio instruction cycles, since state machine increment "tick" every 2 instruction cycles
-    // T_measured = ticks * T_tick, where T_tick = 2 * T_pio = 2 * (1/F_pio) = 2 * (1/2MHZ) = 1us.
-    // T_measured corresponds to 128 MCU clock cycles, so T_MCU = T_measured / 128
-    // Finally F_MCU = 1/T_MCU = (1/T_measured) * 128 
-    float T_measured_us = (float)(ticks * 2 * SYNC_PERIOD);
-    // F_MCU is in HZ
-    float F_MCU = (1/T_measured_us) * 128 * MHZ;
-
-    // Debug
-    printf("Measured frequency: %.2f Hz\n", F_MCU);
-
-    return F_MCU;
+    return ticks;
 }

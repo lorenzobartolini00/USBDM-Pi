@@ -55,9 +55,11 @@ uint bdm_command_exec(void);
 // BDM commands
 //=====================================================================================
 void bdm_cmd_sync(void);
+uint16_t bdm_cmd_get_sync_length(void);
 
 void bdm_cmd_read_status(uint8_t *command_buffer);
 
+void bdm_cmd_go(void);
 void bdm_cmd_halt(void);
 
 void bdm_cmd_read_a(uint8_t *command_buffer);
@@ -65,6 +67,12 @@ void bdm_cmd_read_ccr(uint8_t *command_buffer);
 void bdm_cmd_read_pc(uint8_t *command_buffer);
 void bdm_cmd_read_hx(uint8_t *command_buffer);
 void bdm_cmd_read_sp(uint8_t *command_buffer);
+
+void bdm_cmd_write_a(uint8_t *command_buffer);
+void bdm_cmd_write_ccr(uint8_t *command_buffer);
+void bdm_cmd_write_pc(uint8_t *command_buffer);
+void bdm_cmd_write_hx(uint8_t *command_buffer);
+void bdm_cmd_write_sp(uint8_t *command_buffer);
 
 void bdm_cmd_write_byte(uint8_t addr_h, uint8_t addr_l, uint8_t data);
 void bdm_cmd_write_next(uint8_t data);

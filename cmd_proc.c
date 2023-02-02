@@ -151,6 +151,11 @@ uint8_t command_exec(uint8_t* command_buffer)
       command_status = _cmd_usbdm_read_status_reg(command_buffer);
       break;
     }
+    case CMD_USBDM_TARGET_GO:  //24
+    {
+      command_status = _cmd_usbdm_go(command_buffer);
+      break;
+    }
     case CMD_USBDM_TARGET_HALT:  //25
     {
       command_status = _cmd_usbdm_halt(command_buffer);
@@ -342,8 +347,10 @@ uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer)
 //!
 uint8_t _cmd_usbdm_get_speed(uint8_t* command_buffer) 
 {
-  command_buffer[1] = 0;
-  command_buffer[2] = 0;
+  uint16_t sync_length = bdm_cmd_get_sync_length();
+  command_buffer[1] = (uint8_t)(sync_length>>8);
+  command_buffer[2] = (uint8_t)(sync_length&0xFF);
+
   response_size = 3;
   return BDM_RC_OK;
 }
@@ -370,6 +377,12 @@ uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer)
   return BDM_RC_OK;
 }
 
+uint8_t _cmd_usbdm_go(uint8_t* command_buffer)
+{
+  bdm_cmd_go();
+  return BDM_RC_OK;
+}
+
 uint8_t _cmd_usbdm_halt(uint8_t* command_buffer)
 {
   bdm_cmd_halt();
@@ -390,6 +403,32 @@ uint8_t _cmd_usbdm_halt(uint8_t* command_buffer)
 //!
 uint8_t _cmd_usbdm_write_reg(uint8_t* command_buffer)
 {
+
+  switch (command_buffer[3]) {
+    case HCS08_RegPC :
+        // 16 bit register
+        bdm_cmd_write_pc(command_buffer);
+        break;
+    case HCS08_RegHX  :
+        // 16 bit register
+        bdm_cmd_write_hx(command_buffer);
+        break;
+    case HCS08_RegSP :
+        // 16 bit register
+        bdm_cmd_write_sp(command_buffer);
+        break;
+    case HCS08_RegA  :
+        // 8 bit register
+        bdm_cmd_write_a(command_buffer);
+        break;
+    case HCS08_RegCCR :
+        // 8 bit register
+        bdm_cmd_write_ccr(command_buffer);
+        break;
+    default:
+        return BDM_RC_ILLEGAL_PARAMS;
+  }
+
   return BDM_RC_OK;
 }
 
@@ -461,7 +500,7 @@ uint8_t _cmd_usbdm_write_mem(uint8_t* command_buffer)
   uint8_t  count      = command_buffer[3];
   uint8_t addr_h      = command_buffer[6];
   uint8_t addr_l      = command_buffer[7];
-  //uint16_t addr = (uint16_t)((addr_h<<8) | addr_l);
+  uint16_t addr       = (uint16_t)((addr_h<<8) | addr_l);
   uint8_t *data_ptr   = command_buffer+8;
 
   if (mode & MS_FAST)
@@ -471,17 +510,13 @@ uint8_t _cmd_usbdm_write_mem(uint8_t* command_buffer)
   }
   else
   {
-    bdm_cmd_write_byte(addr_h, addr_l, *data_ptr);
-    count--;
-    data_ptr++;
-
-    // If still have some data, write it on memory with write next
-    while(count > 0)
+    while (count > 0)
     {
-      bdm_cmd_write_next(*data_ptr);
+      bdm_cmd_write_byte((uint8_t)(addr>>8), (uint8_t)(addr&0xFF), *data_ptr);
 
-      count--;
-      data_ptr++;
+      count--;        // decrement count of bytes
+      data_ptr++;     // increment buffer pointer
+      addr++;         // increment memory address
     }
   }
 
@@ -509,6 +544,7 @@ uint8_t _cmd_usbdm_read_mem(uint8_t* command_buffer)
   uint8_t  count      = command_buffer[3];
   uint8_t addr_h      = command_buffer[6];
   uint8_t addr_l      = command_buffer[7];
+  uint16_t addr       = (uint16_t)((addr_h<<8) | addr_l);
   uint8_t  *data_ptr  = command_buffer+1;
 
   if (count > MAX_COMMAND_SIZE-1)
@@ -525,17 +561,13 @@ uint8_t _cmd_usbdm_read_mem(uint8_t* command_buffer)
   }
   else
   {
-    bdm_cmd_read_byte(addr_h, addr_l, data_ptr);
-    count--;
-    data_ptr++;
-
-    // If still have some data, write it on memory with write next
-    while(count > 0)
+    while (count > 0)
     {
-      bdm_cmd_read_next(data_ptr);
+      bdm_cmd_read_byte((uint8_t)(addr>>8), (uint8_t)(addr&0xFF), data_ptr);
 
-      count--;
-      data_ptr++;
+      count--;        // decrement count of bytes
+      data_ptr++;     // increment buffer pointer
+      addr++;         // increment memory address
     }
   }
 

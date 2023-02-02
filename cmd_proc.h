@@ -50,6 +50,8 @@ uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_get_speed(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer);
+
+uint8_t _cmd_usbdm_go(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_halt(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_write_reg(uint8_t* command_buffer);

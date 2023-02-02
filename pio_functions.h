@@ -53,4 +53,4 @@ uint bdm_init(PIO pio, uint sm, float pio_freq);
 void do_bdm_command(PIO pio, uint sm, uint data, uint tx_bit, uint rx_bit, uint offset);
 
 // Do the SYNC command
-float sync(PIO pio, uint sm, float pio_freq);
+uint sync(PIO pio, uint sm, float pio_freq);
