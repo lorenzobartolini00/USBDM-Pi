@@ -22,8 +22,28 @@ static PIO pio = pio0;
 // Get first free state machine in PIO 0
 static uint sm;
 
-// Tx data array
-static uint8_t tx_data[MAX_BDM_COMMAND_SIZE];
+// Data buffer
+//! @note : Format
+//!         - [0]    = # of bytes to tx (up to 3)
+//!         - [1]    = # of bytes to rx (up to 2)
+//!         - [2]    = BDM command 
+//!         - [3]    = 1st byte parameter (opt)
+//!         - [4]    = 2nd byte parameter (opt)
+static uint8_t data_buffer[MAX_BDM_COMMAND_SIZE];
+
+// Build word data from data_buffer
+uint _make_data()
+{
+    uint data = 0;
+    uint8_t byte_count = data_buffer[TX_BIT_COUNT];
+
+    for (int i=COMMAND; i<byte_count+COMMAND; i++)
+    {
+        data = data_buffer[i] | (data<<BYTE);
+    }
+
+    return data;
+}
 
 //! Execute BDM command
 //!
@@ -37,7 +57,7 @@ static uint8_t tx_data[MAX_BDM_COMMAND_SIZE];
 //! @return
 //!     Received data
 //!
-uint bdm_command_exec(uint data, uint8_t tx_bit_count, uint8_t rx_bit_count)
+uint bdm_command_exec(void)
 {
     if(!is_sm_init)
     {
@@ -62,6 +82,11 @@ uint bdm_command_exec(uint data, uint8_t tx_bit_count, uint8_t rx_bit_count)
         is_bdm_data_init = true;
     }
 
+    // Make data based on bytes in data_buffer
+    uint data = _make_data();
+    uint8_t tx_bit_count = data_buffer[TX_BIT_COUNT]*BYTE;
+    uint8_t rx_bit_count = data_buffer[RX_BIT_COUNT]*BYTE;
+
     do_bdm_command(pio, sm, data, tx_bit_count, rx_bit_count, pio_offset);
 
     // Wait the end of the operation
@@ -75,21 +100,6 @@ uint bdm_command_exec(uint data, uint8_t tx_bit_count, uint8_t rx_bit_count)
     }
 
     return received_data;
-}
-
-uint make_data(uint8_t bdm_command, uint8_t byte_count)
-{
-    uint data = 0;
-
-    for (int i=0;i<(byte_count-1);i++)
-    {
-        data |= tx_data[i];
-        data = (data<<8);
-    }
-
-    data |= bdm_command;
-
-    return data;
 }
 
 //=====================================================================================
@@ -113,14 +123,21 @@ void bdm_cmd_sync(void)
     is_freq_known = true;
 }
 
-uint8_t bdm_cmd_read_status(void)
+//! Read status register
+//! @return
+//!     data_buffer: 
+//!     [3]   = status
+//!
+uint8_t* bdm_cmd_read_status(void)
 {
-    // Transmit 1 byte, containing bdm command. 
-    // Receive 1 byte, containing status
-    uint8_t tx_bit_count = BYTE;
-    uint8_t rx_bit_count = BYTE;
+    data_buffer[TX_BIT_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BIT_COUNT] = 1; // 1 byte to receive
+    data_buffer[COMMAND] = READ_STATUS;
 
-    uint8_t status = (uint8_t)bdm_command_exec(READ_STATUS, tx_bit_count, rx_bit_count);
+    uint8_t status = (uint8_t)bdm_command_exec();
 
-    return status;
+    // Save received data in buffer
+    data_buffer[FIRST_PARAMETER] = status;
+
+    return data_buffer;
 }

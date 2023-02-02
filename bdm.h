@@ -39,11 +39,19 @@
 #define BYTE    8   // bits
 #define MAX_BDM_COMMAND_SIZE 5
 
+enum{
+    TX_BIT_COUNT = 0,
+    RX_BIT_COUNT = 1,
+    COMMAND = 2,
+    FIRST_PARAMETER = 3,
+    SECOND_PARAMETER = 4
+};
 
-uint bdm_command_exec(uint data, uint8_t tx_bit_count, uint8_t rx_bit_count);
+
+uint bdm_command_exec(void);
 
 //=====================================================================================
 // BDM commands
 //=====================================================================================
 void bdm_cmd_sync(void);
-uint8_t bdm_cmd_read_status(void);
+uint8_t* bdm_cmd_read_status(void);

@@ -171,7 +171,7 @@ void set_command_status(uint8_t status)
 //! Set target type
 //! Initialise interface for given target
 //! @note
-//!   commandBuffer        \n
+//!   command_buffer        \n
 //!   - [2] = target type
 //!  @note
 //!   In our implementation, only one target is available. This function will initialise BDM interface.
@@ -187,7 +187,7 @@ uint8_t _cmd_usbdm_set_target(uint8_t* command_buffer)
 //! Directly control Target Vdd
 //!
 //! @note
-//!   commandBuffer\n
+//!   command_buffer\n
 //!     Entry: [2..3] = control value (MSB unused)\n
 //!     Exit:  none
 //!
@@ -256,7 +256,7 @@ uint8_t _cmd_usbdm_get_capabilities(uint8_t* command_buffer)
 //! Set various options
 //!
 //! @note
-//!   commandBuffer\n
+//!   command_buffer\n
 //!   - [2..N] = options (image of \ref BDM_Option_t)
 //!
 //!  @return
@@ -285,7 +285,7 @@ uint8_t _cmd_usbdm_connect(void)
 //! HCS12/HCS08/RS08/CFV1 -  Set comm speed to user supplied value
 //!
 //! @note
-//!  commandBuffer                                 \n
+//!  command_buffer                                 \n
 //!  - [1..2] = 16-bit Sync value in 60MHz ticks
 //!
 //! @return
@@ -307,18 +307,19 @@ uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer)
 //!    == \ref BDM_RC_OK => success       \n
 //!    != \ref BDM_RC_OK => error         \n
 //!                                       \n
-//!  commandBuffer                        \n
+//!  command_buffer                        \n
 //!  - [1..4] => 8-bit Status register [MSBs are zero]
 //!
 uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer)
 {
-  // BDM COMMAND READ STATUS REG...
   response_size = 5;
   command_buffer[1] = 0;
   command_buffer[2] = 0;
   command_buffer[3] = 0;
 
-  command_buffer[4] = bdm_cmd_read_status();
+  // Return data_buffer, which contains byte status
+  uint8_t* data_buffer = bdm_cmd_read_status();
+  command_buffer[4] = data_buffer[3];
 
   return BDM_RC_OK;
 }
