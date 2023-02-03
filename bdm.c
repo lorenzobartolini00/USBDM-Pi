@@ -5,6 +5,7 @@
 
 #include "pio_functions.h"
 #include "config.h"
+#include "BDM_options.h"
 
 // Select state machine
 static bool is_sm_init = false;
@@ -139,6 +140,7 @@ void bdm_cmd_sync(void)
 uint16_t bdm_cmd_get_sync_length(void)
 {
     uint16_t sync_length = (uint16_t)60*ticks;
+    return sync_length;
 }
 
 //! Read status register
@@ -160,6 +162,36 @@ void bdm_cmd_read_status(uint8_t *command_buffer)
     return;
 }
 
+//! HCS12/HCS08/RS08/CFV1 -  Write Target BDM Control Register
+//!
+//! @note
+//!  command_buffer                                          \n
+//!   - [2..5] => 8-bit control register value [MSBs ignored]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success       \n
+//!    != \ref BDM_RC_OK => error         \n
+//!
+void bdm_cmd_write_control(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 2; // 2 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 0; // 0 byte to receive
+    data_buffer[COMMAND] = WRITE_CONTROL;
+    data_buffer[FIRST_PARAMETER] = command_buffer[5];
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Reset target
+void bdm_cmd_reset(void)
+{
+    bdm_cmd_write_byte((uint8_t)(HCS08_SBDFR_DEFAULT>>8), (uint8_t)(HCS08_SBDFR_DEFAULT&0xff), HCS_SBDFR_BDFR);
+
+    return;
+}
+
 // Start executing user program
 void bdm_cmd_go(void)
 {
@@ -168,8 +200,6 @@ void bdm_cmd_go(void)
     data_buffer[COMMAND] = GO;
 
     bdm_command_exec();
-
-    is_freq_known = false;
 
     return;
 }

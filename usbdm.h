@@ -3,7 +3,7 @@
 
 typedef enum {
    // Common to all targets
-   CMD_USBDM_GET_COMMAND_RESPONSE  = 0,   //!< Status of last/current command
+   CMD_USBDM_GET_COMMAND_STATUS  = 0,   //!< Status of last/current command
    CMD_USBDM_SET_TARGET            = 1,   //!< Set target,  @param [2] 8-bit target value @ref TargetType_t
    CMD_USBDM_SET_VDD               = 2,   //!< Set target Vdd (immediate effect)
    CMD_USBDM_DEBUG                 = 3,   //!< Debugging commands (parameter determines actual command) @param [2]  Debug command see \ref DebugSubCommands

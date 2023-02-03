@@ -58,7 +58,9 @@ void bdm_cmd_sync(void);
 uint16_t bdm_cmd_get_sync_length(void);
 
 void bdm_cmd_read_status(uint8_t *command_buffer);
+void bdm_cmd_write_control(uint8_t *command_buffer);
 
+void bdm_cmd_reset(void);
 void bdm_cmd_go(void);
 void bdm_cmd_halt(void);
 

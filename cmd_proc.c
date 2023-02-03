@@ -106,6 +106,10 @@ uint8_t command_exec(uint8_t* command_buffer)
 
   switch((uint8_t)command)
   {
+    case CMD_USBDM_GET_COMMAND_STATUS:  //0
+    {
+      break;
+    }
     case CMD_USBDM_SET_TARGET:  //1
     {
       command_status = _cmd_usbdm_set_target();
@@ -131,9 +135,15 @@ uint8_t command_exec(uint8_t* command_buffer)
       command_status = _cmd_usbdm_set_options(command_buffer);
       break;
     }
+    case CMD_USBDM_CONTROL_PINS:  //8
+    {
+      // Not implemented
+      command_status = BDM_RC_OK;
+      break;
+    }
     case CMD_USBDM_CONNECT:  //15
     {
-      command_status = BDM_RC_OK;
+      command_status = _cmd_usbdm_connect();
       break;
     }
     case CMD_USBDM_SET_SPEED:  //16
@@ -149,6 +159,16 @@ uint8_t command_exec(uint8_t* command_buffer)
     case CMD_USBDM_READ_STATUS_REG:  //20
     {
       command_status = _cmd_usbdm_read_status_reg(command_buffer);
+      break;
+    }
+    case CMD_USBDM_WRITE_CONTROL_REG:  //21
+    {
+      command_status = _cmd_usbdm_write_control_reg(command_buffer);
+      break;
+    }
+    case CMD_USBDM_TARGET_RESET:  //22
+    {
+      command_status = _cmd_usbdm_reset(command_buffer);
       break;
     }
     case CMD_USBDM_TARGET_GO:  //24
@@ -209,13 +229,10 @@ void set_command_status(uint8_t status)
 //!   command_buffer        \n
 //!   - [2] = target type
 //!  @note
-//!   In our implementation, only one target is available. This function will initialise BDM interface.
+//!   In our implementation, only one target is available.
 //!
 uint8_t _cmd_usbdm_set_target(uint8_t* command_buffer)
 {
-  // Init BDM
-  // ...
-
   return BDM_RC_OK;
 }
 
@@ -313,6 +330,7 @@ uint8_t _cmd_usbdm_connect(void)
 {
   // Since we have no control over target's power supply, we can't connect it via software. 
   // To connect the target, press pico's board button and cycle target power supply(turn off->turn on)
+  bdm_cmd_sync();
 
   return BDM_RC_OK;
 }
@@ -373,6 +391,60 @@ uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer)
 
   // Save status on command_buffer[4]
   bdm_cmd_read_status(command_buffer);
+
+  return BDM_RC_OK;
+}
+
+//! HCS12/HCS08/RS08/CFV1 -  Write Target BDM Control Register
+//!
+//! @note
+//!  command_buffer                                          \n
+//!   - [2..5] => 8-bit control register value [MSBs ignored]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success       \n
+//!    != \ref BDM_RC_OK => error         \n
+//!
+uint8_t _cmd_usbdm_write_control_reg(uint8_t* command_buffer)
+{
+  bdm_cmd_write_control(command_buffer);
+
+  return BDM_RC_OK;
+}
+
+//! HCS12/HCS08/RS08/CFV1 -  Reset Target
+//!
+//! @note
+//!  commandBuffer                                          \n
+//!   - [2] => 8-bit reset control [see \ref TargetMode_t]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success       \n
+//!    != \ref BDM_RC_OK => error         \n
+//!
+uint8_t _cmd_usbdm_reset(uint8_t* command_buffer)
+{
+  switch (command_buffer[2] & RESET_TYPE_MASK)
+  {
+  case RESET_HARDWARE:
+  {
+    return BDM_RC_FEATURE_NOT_SUPPORTED;
+  }
+  case RESET_POWER:
+  {
+    return BDM_RC_FEATURE_NOT_SUPPORTED;
+  }
+  case RESET_SOFTWARE:
+  {
+    // Soft reset HCS08
+    bdm_cmd_reset();
+    break;
+  }
+  default:
+  {
+    return BDM_RC_ILLEGAL_PARAMS;
+  }
+  }
 
   return BDM_RC_OK;
 }

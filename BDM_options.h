@@ -30,6 +30,10 @@ typedef enum  {
 //#define HCS08_SRS            (0x1800) //!< HCS08 SRS address
 #define HCS08_SBDFR_DEFAULT  (0x1801) //!< Default HCS08 SBDFR address
 
+// HCS08 Register bit masks
+//===============================
+#define HCS_SBDFR_BDFR (0x01) //!< HCS08 SBDFR BDFR mask
+
 
 //! Target interface options
 typedef struct {
