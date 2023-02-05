@@ -84,8 +84,8 @@ static CableStatus_t cable_status =  {
    // 32:  CMD_USBDM_WRITE_MEM
    // 33:  CMD_USBDM_READ_MEM
 //--------------------------------------------------------------------+
-USBDM_ErrorCode command_status = BDM_RC_OK;
-uint8_t response_size = 1;
+static USBDM_ErrorCode command_status = BDM_RC_OK;
+static uint8_t response_size = 1;
 
 /*
  *   Processes all commands received over USB
@@ -112,7 +112,7 @@ uint8_t command_exec(uint8_t* command_buffer)
     }
     case CMD_USBDM_SET_TARGET:  //1
     {
-      command_status = _cmd_usbdm_set_target();
+      command_status = _cmd_usbdm_set_target(command_buffer);
       break;
     }
     case CMD_USBDM_SET_VDD:  //2
@@ -207,7 +207,7 @@ uint8_t command_exec(uint8_t* command_buffer)
       break;
     }
   }
-
+  
   // Save command status in buffer
   command_buffer[0] = command_status;
 

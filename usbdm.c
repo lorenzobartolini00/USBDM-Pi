@@ -13,10 +13,13 @@
 
 
 static uint8_t command_buffer[MAX_COMMAND_SIZE];
-static uint8_t current_usb_command = 0;
 static uint8_t command_size = 0;
-static uint8_t command_offset = 0;
+static uint8_t offset = 0;
 static uint8_t saved_byte = 0;
+
+// Signal the presence of first pkt
+static bool first_pkt_received = false;
+
 
 
 //--------------------------------------------------------------------+
@@ -79,81 +82,77 @@ void send_USB_response(uint8_t *buffer, uint8_t byte_count)
  *   |                          |
  *   +--------------------------+
 */
+
 USBDM_ErrorCode receive_USB_command(void)
 {
-  uint8_t command_toggle = 0;
+  uint8_t temp_buffer[MAX_COMMAND_SIZE];
 
-  uint8_t byte_count = tud_vendor_read(command_buffer + command_offset, MAX_COMMAND_SIZE - command_offset);
+  uint8_t byte_count = tud_vendor_read(temp_buffer, MAX_COMMAND_SIZE);
 
-  // Retrieve data
-  uint8_t first_byte = command_buffer[command_offset];
+  // Get first byte
+  uint8_t first_byte = temp_buffer[0];
 
-  // True if the first packet is the only one present or the second packet has just been received
-  bool done_receiving_data = false;
-
-  // 1st pkt
+  // 1st pkt or additional data
   if (first_byte!=0)
   {
-    // The first byte of the first packet is the size of the entire command
-    command_size = first_byte;
+    if (!first_pkt_received)
+    {
+      // Save entire command size
+      command_size = first_byte;
+
+      // Save last byte of the first pkt
+      saved_byte = command_buffer[byte_count-1];
+
+      first_pkt_received = true;
+    }
+
     if (command_size > MAX_COMMAND_SIZE) 
     {
       command_size = MAX_COMMAND_SIZE;
     }
 
-    // The second byte of the first packet is the command
-    current_usb_command = command_buffer[command_offset + 1];
-
-    if(command_size > byte_count)
-    {
-      // Second packet is coming next, so save offset to concatenate data. 
-      // The last byte of the first packet will be overwritten, in order to make room for the first (useless) byte of the second packet.
-      command_offset = byte_count - 1;
-
-      // Save the last byte of the first packet, since it will be overwritten by the first of the second packet
-      saved_byte=command_buffer[command_offset];
-    }
-    else if(command_size == byte_count)
-    {
-      // Only first packet is present
-      done_receiving_data = true;
-
-      command_offset=0;
-    }
-    else
-    {
-      // Error
-      return send_USB_error_response(BDM_RC_FAIL);
-    }
+    // Save data in command buffer
+    memcpy(command_buffer + offset, temp_buffer, byte_count);
   }
   //2nd packet
   else
   {
+    // Save data in command buffer
+    memcpy(command_buffer + (offset-1), temp_buffer, byte_count);
+
     // Overwrite the first byte of the second packet, which contains zero, with the last byte of the first packet previously saved.
-    command_buffer[command_offset] = saved_byte;
+    command_buffer[offset-1] = saved_byte;
 
-    // The second packet has arrived
-    done_receiving_data = true;
-
-    // Reset offset(only 2 consecutive transactions)
-    command_offset=0;
+    // Do not consider the first 0x00 byte in 2nd pkt in data count
+    byte_count--;
   }
 
-  if(done_receiving_data)
+  offset += byte_count;
+
+  // All data has been received
+  if(offset == command_size)
   {
-    command_toggle = command_buffer[1] & 0x80;
-    command_buffer[1] &= 0x7F;
+    //command_toggle = command_buffer[1] & 0x80;
+    //command_buffer[1] &= 0x7F;
     
     // Execute the command
     // NOTE: after excecuting a command, command_exec return the number of bytes to send back to host;
     uint8_t return_size = command_exec(command_buffer);
-    command_buffer[0] |= command_toggle;
+    //command_buffer[0] |= command_toggle;
 
     send_USB_response(command_buffer, return_size);
-  }
 
-  // Return command status
-  return command_buffer[0];
+    // Reset
+    first_pkt_received = false;
+    offset = 0;
+
+    // Return command status
+    return command_buffer[0];
+  }
+  else
+  {
+    return BDM_RC_BUSY;
+  }
 }
 
 
@@ -189,13 +188,13 @@ bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage, tusb_control_requ
 }
 
 
-USBDM_ErrorCode send_USB_error_response(USBDM_ErrorCode code)
+USBDM_ErrorCode send_USB_error_response(USBDM_ErrorCode code, uint8_t size)
 {
   // Error
   command_buffer[0] = code;
   set_command_status(code);
 
-  send_USB_response(command_buffer, 1);
+  send_USB_response(command_buffer, size);
 
   return code;
 }

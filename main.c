@@ -99,7 +99,7 @@ void usbdm_task(void)
   if (tud_vendor_available())
   {
     // Receive command from EP1 OUT
-    USBDM_ErrorCode command_status = receive_USB_command();
+    command_status = receive_USB_command();
 
     if ((uint8_t)command_status==BDM_RC_OK)
     {

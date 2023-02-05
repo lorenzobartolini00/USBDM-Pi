@@ -58,7 +58,7 @@ typedef enum { /* type of reset action required */
 //--------------------------------------------------------------------+
 // IMPLEMENTED FUNCTIONALITIES
 //--------------------------------------------------------------------+
-uint8_t _cmd_usbdm_set_target();
+uint8_t _cmd_usbdm_set_target(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_set_vdd(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_get_bdm_status(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_get_capabilities(uint8_t* command_buffer);

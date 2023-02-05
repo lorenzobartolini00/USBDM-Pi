@@ -201,4 +201,4 @@ typedef enum  {
 
 USBDM_ErrorCode receive_USB_command(void);
 void send_USB_response(uint8_t *buffer, uint8_t byte_count);
-USBDM_ErrorCode send_USB_error_response(USBDM_ErrorCode code);
+USBDM_ErrorCode send_USB_error_response(USBDM_ErrorCode code, uint8_t size);
