@@ -85,9 +85,9 @@ void send_USB_response(uint8_t *buffer, uint8_t byte_count)
 
 USBDM_ErrorCode receive_USB_command(void)
 {
-  uint8_t temp_buffer[MAX_COMMAND_SIZE];
+  uint8_t temp_buffer[BDM_IN_EP_MAXSIZE];
 
-  uint8_t byte_count = tud_vendor_read(temp_buffer, MAX_COMMAND_SIZE);
+  uint8_t byte_count = tud_vendor_read(temp_buffer, BDM_IN_EP_MAXSIZE);
 
   // Get first byte
   uint8_t first_byte = temp_buffer[0];
@@ -131,14 +131,10 @@ USBDM_ErrorCode receive_USB_command(void)
 
   // All data has been received
   if(offset == command_size)
-  {
-    //command_toggle = command_buffer[1] & 0x80;
-    //command_buffer[1] &= 0x7F;
-    
+  { 
     // Execute the command
     // NOTE: after excecuting a command, command_exec return the number of bytes to send back to host;
     uint8_t return_size = command_exec(command_buffer);
-    //command_buffer[0] |= command_toggle;
 
     send_USB_response(command_buffer, return_size);
 

@@ -47,7 +47,7 @@ pico_generate_pio_header(${PROJECT_NAME}
 
 # Link to pico_stdlib (gpio, time, etc. functions)
 # In addition to pico_stdlib required for common PicoSDK functionality, add dependency on tinyusb_device
-# for TinyUSB device support and tinyusb_board for the additional board support library used by the example
+# for TinyUSB device support and tinyusb_board for the additional board support library
 target_link_libraries(
     ${PROJECT_NAME} PUBLIC
     pico_stdlib

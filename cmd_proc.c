@@ -138,7 +138,7 @@ uint8_t command_exec(uint8_t* command_buffer)
     case CMD_USBDM_CONTROL_PINS:  //8
     {
       // Not implemented
-      command_status = BDM_RC_OK;
+      command_status = _cmd_usbdm_control_pins(command_buffer);
       break;
     }
     case CMD_USBDM_CONNECT:  //15
@@ -171,6 +171,11 @@ uint8_t command_exec(uint8_t* command_buffer)
       command_status = _cmd_usbdm_reset(command_buffer);
       break;
     }
+    case CMD_USBDM_TARGET_STEP:  //23
+    {
+      command_status = _cmd_usbdm_step(command_buffer);
+      break;
+    }
     case CMD_USBDM_TARGET_GO:  //24
     {
       command_status = _cmd_usbdm_go(command_buffer);
@@ -189,6 +194,16 @@ uint8_t command_exec(uint8_t* command_buffer)
     case CMD_USBDM_READ_REG:  //27
     {
       command_status = _cmd_usbdm_read_reg(command_buffer);
+      break;
+    }
+    case CMD_USBDM_WRITE_DREG:  //30
+    {
+      command_status = _cmd_usbdm_write_bkpt(command_buffer);
+      break;
+    }
+    case CMD_USBDM_READ_DREG:  //31
+    {
+      command_status = _cmd_usbdm_read_bkpt(command_buffer);
       break;
     }
     case CMD_USBDM_WRITE_MEM:  //32
@@ -321,6 +336,24 @@ uint8_t _cmd_usbdm_set_options(uint8_t* command_buffer)
    return BDM_RC_OK;
 }
 
+
+//! Directly control pins
+//!
+//! @note
+//!   commandBuffer\n
+//!     Entry: [2..3] = control value\n
+//!     Exit:  [1..2] = pin values (MSB unused) - not yet implemented
+//!
+uint8_t _cmd_usbdm_control_pins(uint8_t* command_buffer) 
+{
+  response_size = 3;
+  command_buffer[1] = 0;
+  command_buffer[2] = 0;
+
+  return BDM_RC_OK;
+}
+
+
 //! HCS12/HCS08/RS08/CFV1 - Try to connect to the target
 //!
 //! @return
@@ -449,6 +482,12 @@ uint8_t _cmd_usbdm_reset(uint8_t* command_buffer)
   return BDM_RC_OK;
 }
 
+uint8_t _cmd_usbdm_step(uint8_t* command_buffer)
+{
+  bdm_cmd_trace();
+  return BDM_RC_OK;
+}
+
 uint8_t _cmd_usbdm_go(uint8_t* command_buffer)
 {
   bdm_cmd_go();
@@ -552,6 +591,54 @@ uint8_t _cmd_usbdm_read_reg(uint8_t* command_buffer)
 
   return BDM_RC_OK;
 }
+
+//! HCS08/RS08 Write to Breakpoint reg
+//!
+//! @note
+//!  commandBuffer                                    \n
+//!  - [2..3] => 16-bit register number [ignored]     \n
+//!  - [4..7] => 32-bit register value  [MSBs ignored]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success        \n
+//!    != \ref BDM_RC_OK => error
+//!
+uint8_t _cmd_usbdm_write_bkpt(uint8_t* command_buffer)
+{
+  uint8_t addr_h = command_buffer[6];
+  uint8_t addr_l = command_buffer[7];
+
+  bdm_cmd_write_bkpt(addr_h, addr_l);
+
+  return BDM_RC_OK;
+}
+
+
+//! HCS08/RS08 Read from Breakpoint reg
+//!
+//! @note
+//!  commandBuffer                                    \n
+//!  - [2..3] => 16-bit register number [ignored]     \n
+//!  - [1..4] => 32-bit register value  [MSBs zeroed]
+//!
+//! @return
+//!    == \ref BDM_RC_OK => success                         \n
+//!    != \ref BDM_RC_OK => error                           \n
+//!                                                         \n
+//!  commandBuffer                                          \n
+//!  - [1..4] => 32-bit register value  [some MSBs ignored]
+//!
+uint8_t _cmd_usbdm_read_bkpt(uint8_t* command_buffer)
+{
+  command_buffer[1] = 0;
+  command_buffer[2] = 0;
+
+  // Save 16 bit reg in command_buffer
+  bdm_cmd_read_bkpt(command_buffer+2);
+
+  return BDM_RC_OK;
+}
+
 
 //! HCS08/RS08 -  Write block of bytes to memory
 //!

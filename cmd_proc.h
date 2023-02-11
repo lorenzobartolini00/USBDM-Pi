@@ -63,6 +63,7 @@ uint8_t _cmd_usbdm_set_vdd(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_get_bdm_status(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_get_capabilities(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_set_options(uint8_t* command_buffer);
+uint8_t _cmd_usbdm_control_pins(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_connect();
 uint8_t _cmd_usbdm_set_speed(uint8_t* command_buffer);
@@ -72,11 +73,15 @@ uint8_t _cmd_usbdm_read_status_reg(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_write_control_reg(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_reset(uint8_t* command_buffer);
+uint8_t _cmd_usbdm_step(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_go(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_halt(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_write_reg(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_read_reg(uint8_t* command_buffer);
+
+uint8_t _cmd_usbdm_write_bkpt(uint8_t* command_buffer);
+uint8_t _cmd_usbdm_read_bkpt(uint8_t* command_buffer);
 
 uint8_t _cmd_usbdm_write_mem(uint8_t* command_buffer);
 uint8_t _cmd_usbdm_read_mem(uint8_t* command_buffer);

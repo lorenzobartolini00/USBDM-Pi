@@ -48,12 +48,6 @@ uint8_t const desc_configuration[] =
 // Interface number, string index, EP Out & IN address, EP size
   TUD_VENDOR_DESCRIPTOR(BULK_INTF_ID, s_bulk_interface_index, USB_DIR_OUT | BULK_ENDPOINT, USB_DIR_IN | 2, CFG_TUD_VENDOR_EPSIZE),
 
-  // 1st CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-  //TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_0, s_cdc_interface_index, USB_DIR_IN | CDC_0_NOTIF_ENDPOINT, 8, USB_DIR_OUT | CDC_0_DATA_ENDPOINT, USB_DIR_IN | CDC_0_DATA_ENDPOINT, 64)
-
-  // 2nd CDC: Interface number, string index, EP notification address and size, EP data address (out, in) and size.
-  // TUD_CDC_DESCRIPTOR(ITF_NUM_CDC_1, s_cdc_interface_index, USB_DIR_IN | CDC_1_NOTIF_ENDPOINT, 8, USB_DIR_OUT | CDC_1_DATA_ENDPOINT, USB_DIR_IN | CDC_1_DATA_ENDPOINT, 64),
-
   
 };
 

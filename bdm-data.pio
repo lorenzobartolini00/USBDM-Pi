@@ -15,7 +15,7 @@ tx_loop:
 keep_low:
     nop
     nop                          [7]    ; If 0 is transmitted, hold pin BKGD low for 9 cycles                      
-end_tx_loop:                            ; pin BKGD goes high for the last 3 cycles. If it was high before, side set operation does not take place        
+end_tx_loop:                            ; Pin BKGD goes high for the last 3 cycles.   
     jmp !osre tx_loop   side 1   [1]    ; If osr is not empty(osr_count < pull_threshold), go back to tx_loop
     nop                                 ; Keep pin high for the last 16th cycle
 
@@ -25,7 +25,8 @@ delay:
 
     mov y, x                            ; Copy scratch x to y
 
-    jmp x-- rx_loop                     ; Check if there are bits to read. Since x is always decrement by one, it should be the exact number of bit to shift in.
+    jmp x-- rx_loop                     ; Check if there are bits to read. 
+                                        ;Since x is always decrement by one, it should be the exact number of bit to shift in.
     jmp no_rx                           
  
 rx_loop:
@@ -41,7 +42,8 @@ no_rx:
     in null, 32                         ; Shift in dummy bits to signal the end of the operation
     push
 end:
-    mov x, y                            ; Copy back scratch y to scratch x, in order to save the number of bits to shift in without setting scratch x again    
+    mov x, y                            ; Copy back scratch y to scratch x, in order to save the number of bits to 
+                                        ; shift in without setting scratch x again    
 .wrap
 
 

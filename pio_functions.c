@@ -77,7 +77,6 @@ void wait_end_operation(PIO pio, uint sm)
 {
     // Wait for an operation to complete. 
     // When any operation ends, some data are transferred to rx fifo
-    // (dummy bits in 'delay' and 'tx' operations, actual data in 'rx' operation)
     while(pio_sm_is_rx_fifo_empty(pio, sm));
 }
 
@@ -181,7 +180,7 @@ uint sync(PIO pio, uint sm, float pio_freq)
     // Initialize the program using the helper function in our .pio file
     bdm_sync_program_init(pio, sm, offset, DATA_PIN, div);
 
-    // Start running bdm-delay PIO program in the state machine
+    // Start running bdm-sync PIO program in the state machine
     pio_sm_set_enabled(pio, sm, true);
 
     // Wait for the sm to push data in rx fifo

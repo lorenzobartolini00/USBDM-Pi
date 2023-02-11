@@ -32,6 +32,7 @@ static uint sm;
 //!         - [2]    = BDM command 
 //!         - [3]    = 1st byte parameter (opt)
 //!         - [4]    = 2nd byte parameter (opt)
+//!         - [5]    = 3rd byte parameter (opt)
 static uint8_t data_buffer[MAX_BDM_COMMAND_SIZE];
 
 // Build word data from data_buffer
@@ -184,10 +185,52 @@ void bdm_cmd_write_control(uint8_t *command_buffer)
     return;
 }
 
+// Write BDCBKPT breakpoint register
+void bdm_cmd_write_bkpt(uint8_t addr_h, uint8_t addr_l)
+{
+    data_buffer[TX_BYTE_COUNT] = 3; // 3 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 0; // 0 byte to receive
+    data_buffer[COMMAND] = WRITE_BKPT;
+    data_buffer[FIRST_PARAMETER] = addr_h;
+    data_buffer[SECOND_PARAMETER] = addr_l;
+
+    bdm_command_exec();
+
+    return;
+}
+
+// Read BDCBKPT breakpoint register
+void bdm_cmd_read_bkpt(uint8_t *command_buffer)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 2; // 2 byte to receive
+    data_buffer[COMMAND] = READ_BKPT;
+
+    uint16_t bkpt_register = (uint16_t)bdm_command_exec();
+
+    command_buffer[3] = (uint8_t)(bkpt_register>>8);
+    command_buffer[4] = (uint8_t)(bkpt_register&0xFF);
+
+    return;
+}
+
 // Reset target
 void bdm_cmd_reset(void)
 {
     bdm_cmd_write_byte((uint8_t)(HCS08_SBDFR_DEFAULT>>8), (uint8_t)(HCS08_SBDFR_DEFAULT&0xff), HCS_SBDFR_BDFR);
+
+    return;
+}
+
+// Execute one user instruction at the address in the PC, then return 
+// to Active Background Mod
+void bdm_cmd_trace(void)
+{
+    data_buffer[TX_BYTE_COUNT] = 1; // 1 byte to transmit
+    data_buffer[RX_BYTE_COUNT] = 0; // 0 byte to receive
+    data_buffer[COMMAND] = TRACE1;
+
+    bdm_command_exec();
 
     return;
 }
@@ -404,7 +447,7 @@ void bdm_cmd_read_byte(uint8_t addr_h, uint8_t addr_l, uint8_t* data_ptr)
 
     uint8_t read_byte = (uint8_t)bdm_command_exec();
 
-    // Save read value into the buffer
+    // Save read value into the command_buffer
     data_ptr[0] = read_byte;
 
     return;
